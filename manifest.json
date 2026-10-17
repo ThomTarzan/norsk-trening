@@ -1,0 +1,18 @@
+{
+  "name": "Norsk hver dag",
+  "short_name": "Norsk",
+  "description": "Daglig bokmåltrening fra A1 til C1, med jobbnorsk.",
+  "start_url": "./",
+  "display": "standalone",
+  "lang": "nb",
+  "background_color": "#f3efe4",
+  "theme_color": "#0c5c56",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
