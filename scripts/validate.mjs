@@ -1,6 +1,7 @@
 import { checkExercise } from "../js/check.js";
 import { buildReview, masteryOf, recommendLesson, suggestLevel } from "../js/adapt.js";
 import { freshState } from "../js/storage.js";
+import { shuffleBank, shuffleOptions } from "../js/util.js";
 import {
   LEVELS,
   allVocab,
@@ -165,6 +166,40 @@ for (const lesson of lessons) state.lessons[lesson.id] = { completed: true, star
 const review = buildReview(state, lessons, new Map(allVocab().map((word) => [word.id, word])), 10);
 if (review.items.length !== 10) fail(`Review size ${review.items.length}`);
 if (review.weakCount < 6) fail(`Review weak count too low: ${review.weakCount}`);
+
+// Answer positions must not give the answer away. The data lists the correct
+// option first, so the app has to shuffle options and word banks at render time.
+const allExercises = [...lessons.flatMap((lesson) => lesson.exercises), ...placement.items];
+const sameMembers = (a, b) => a.length === b.length && [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
+for (const exercise of allExercises.filter((entry) => entry.type === "mc")) {
+  const seen = new Set();
+  for (let run = 0; run < 200; run += 1) {
+    const shown = shuffleOptions(exercise.options);
+    if (!sameMembers(shown, exercise.options)) {
+      fail(`${exercise.id} shuffleOptions changed the option set`);
+      break;
+    }
+    if (!checkExercise(exercise, shown[shown.indexOf(exercise.answer)]).ok) fail(`${exercise.id} answer not accepted after shuffle`);
+    seen.add(shown.indexOf(exercise.answer));
+  }
+  if (seen.size < exercise.options.length) {
+    fail(`${exercise.id} answer only appeared at positions ${[...seen].join(",")} after shuffling`);
+  }
+}
+for (const exercise of allExercises.filter((entry) => entry.type === "order")) {
+  if (new Set(exercise.words).size < 2) continue;
+  for (let run = 0; run < 100; run += 1) {
+    const bank = shuffleBank(exercise.words, exercise.solution);
+    if (!sameMembers(bank, exercise.words)) {
+      fail(`${exercise.id} shuffleBank changed the word set`);
+      break;
+    }
+    if (exercise.solution.every((word, index) => bank[index] === word)) {
+      fail(`${exercise.id} word bank was shown in solved order`);
+      break;
+    }
+  }
+}
 
 if (!conceptById.v2 || !conceptById["adverb-sub"] || !conceptById.possessives) fail("Missing expected concepts");
 

@@ -37,6 +37,33 @@ export function shuffle(list) {
   return copy;
 }
 
+/**
+ * Answer options in a random order (Fisher–Yates). The lesson files list the
+ * correct answer first, so options must never be shown in authored order.
+ * Correctness is checked against the option text, never its position.
+ */
+export function shuffleOptions(options) {
+  return shuffle(options);
+}
+
+/**
+ * Word bank for an order exercise. Never starts out already in the solved
+ * order (when another order is possible), so the task cannot be solved by
+ * tapping the chips from left to right.
+ */
+export function shuffleBank(items, solution, wordOf = (item) => item) {
+  const solved = (list) =>
+    solution.length > 0 && solution.every((word, index) => wordOf(list[index]) === word);
+  const distinct = new Set(items.map(wordOf)).size > 1;
+  let result = shuffle(items);
+  let guard = 0;
+  while (distinct && solved(result) && guard < 20) {
+    result = shuffle(items);
+    guard += 1;
+  }
+  return result;
+}
+
 export function shuffleWords(words) {
   if (words.length < 2) return [...words];
   let result = shuffle(words);
