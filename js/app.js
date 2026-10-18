@@ -21,7 +21,7 @@ import {
   recordConcept,
   saveState,
 } from "./storage.js";
-import { esc, formatWhen, greeting, localISO, paragraphs, shuffle } from "./util.js";
+import { esc, formatWhen, greeting, localISO, paragraphs, shuffle, shuffleBank, shuffleOptions } from "./util.js";
 
 const lessonsById = lessonMap();
 const wordsById = vocabMap();
@@ -37,6 +37,7 @@ function blankMem() {
     feedback: null,
     choice: null,
     chips: null,
+    options: null,
     query: "",
     theme: "alle",
   };
@@ -49,6 +50,7 @@ function resetAnswer() {
   mem.feedback = null;
   mem.choice = null;
   mem.chips = null;
+  mem.options = null;
 }
 
 function save() {
@@ -359,13 +361,21 @@ function sentenceHtml(text) {
 function ensureChips(exercise) {
   if (mem.chips?.id === exercise.id) return mem.chips;
   const keyed = exercise.words.map((word, index) => ({ word, key: `${exercise.id}-${index}` }));
-  mem.chips = { id: exercise.id, bank: shuffle(keyed), chosen: [] };
+  mem.chips = { id: exercise.id, bank: shuffleBank(keyed, exercise.solution, (chip) => chip.word), chosen: [] };
   return mem.chips;
+}
+
+/** Shuffled once per question, then kept stable while the user clicks around. */
+function ensureOptions(exercise) {
+  if (mem.options?.id !== exercise.id) {
+    mem.options = { id: exercise.id, list: shuffleOptions(exercise.options) };
+  }
+  return mem.options.list;
 }
 
 function exerciseBlock(exercise, progressLabel) {
   const chips = exercise.type === "order" && !mem.feedback ? ensureChips(exercise) : mem.chips;
-  const options = exercise.type === "mc" ? exercise.options : [];
+  const options = exercise.type === "mc" ? ensureOptions(exercise) : [];
   return `
     <p class="kicker">${esc(progressLabel)} · ${esc(conceptLabel(exercise.concept))}</p>
     <div class="progress" aria-hidden="true"><span style="width:${progressWidth()}%"></span></div>
