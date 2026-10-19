@@ -78,6 +78,16 @@ try {
     deviceScaleFactor: 2,
     mobile: true,
   });
+  await send("Page.navigate", { url: "http://127.0.0.1:8765/" });
+  await wait(600);
+  await evaluate("localStorage.clear(); sessionStorage.clear();");
+  await send("Page.reload", { ignoreCache: true });
+  await wait(600);
+  await evaluate(`(() => {
+    document.querySelector("[data-login]").value = "Tsvitana";
+    document.querySelector("[data-form=login]").requestSubmit();
+  })()`);
+  await wait(400);
   await send("Page.navigate", { url: "http://127.0.0.1:8765/#/plassering" });
   await wait(600);
   await evaluate(`document.querySelector('[data-action="start-placement"]').click()`);
@@ -117,13 +127,7 @@ try {
         })()`);
       }
     } else {
-      const value = exercise.answers[0];
-      await evaluate(`(() => {
-        const field = document.querySelector("[data-draft]");
-        if (!field) throw new Error("missing field");
-        field.value = ${JSON.stringify(value)};
-        field.dispatchEvent(new Event("input", { bubbles: true }));
-      })()`);
+      throw new Error(`Unexpected exercise type ${exercise.type}`);
     }
     const ready = await evaluate(`Boolean(document.querySelector('[data-action="submit"]')) + " | " + document.querySelector("h1")?.textContent`);
     if (!String(ready).startsWith("true")) throw new Error(`No submit for ${exercise.id}: ${ready}\n${await evaluate("document.body.innerText.slice(0,700)")}`);

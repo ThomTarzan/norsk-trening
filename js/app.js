@@ -7,6 +7,8 @@ import {
   lessonMap,
   lessons,
   placement,
+  readingMap,
+  readings,
   vocabMap,
 } from "../data/catalog.js";
 import { buildReview, conceptMastery, dueCount, jobSuggestion, recommendLesson, suggestLevel } from "./adapt.js";
@@ -23,11 +25,20 @@ import {
 } from "./storage.js";
 import { esc, formatWhen, greeting, localISO, paragraphs, shuffle, shuffleBank, shuffleOptions } from "./util.js";
 
+const AUTH_KEY = "norsk-hver-dag-auth";
+const PAGE_PASSWORD = "Tsvitana";
+
 const lessonsById = lessonMap();
+const readingsById = readingMap();
 const wordsById = vocabMap();
 let state = loadState();
 let mem = blankMem();
 let focusMode = "route";
+let loginNote = "";
+
+function isAuthed() {
+  return sessionStorage.getItem(AUTH_KEY) === "1" || localStorage.getItem(AUTH_KEY) === "1";
+}
 
 function blankMem() {
   return {
@@ -40,6 +51,7 @@ function blankMem() {
     options: null,
     query: "",
     theme: "alle",
+    hideText: false,
   };
 }
 
@@ -59,7 +71,8 @@ function save() {
 
 function route() {
   const parts = (location.hash || "#/").replace(/^#/, "").split("/").filter(Boolean);
-  return { name: parts[0] || "home", id: parts[1] || "" };
+  const name = parts[0] === "loyper" ? "kurs" : parts[0] || "home";
+  return { name, id: parts[1] || "" };
 }
 
 function go(hash) {
@@ -192,6 +205,10 @@ function currentTask() {
   if (session.kind === "placement" && session.phase === "quiz") {
     return { exercise: placement.items[session.index], bucket: null, vocab: null };
   }
+  if (session.kind === "reading" && session.phase === "quiz") {
+    const reading = readingsById.get(session.readingId);
+    return { exercise: reading?.questions[session.index] || null, bucket: null, vocab: null };
+  }
   if (session.kind === "review" && session.phase === "quiz") {
     const item = session.plan[session.index];
     if (!item) return null;
@@ -291,7 +308,9 @@ function nextStep() {
       ? lessonsById.get(session.lessonId).exercises.length
       : session.kind === "placement"
         ? placement.items.length
-        : session.plan.length;
+        : session.kind === "reading"
+          ? readingsById.get(session.readingId).questions.length
+          : session.plan.length;
   resetAnswer();
   if (session.index + 1 < taskCount) {
     session.index += 1;
@@ -328,6 +347,16 @@ function finishSession() {
       lastScore: score,
       bestScore: Math.max(previous.bestScore || 0, score),
       times: (previous.times || 0) + 1,
+      lastAt: new Date().toISOString(),
+    };
+    markStudyDay(state);
+  } else if (session.kind === "reading") {
+    const previous = state.readings[session.readingId] || {};
+    state.readings[session.readingId] = {
+      ...previous,
+      completed: true,
+      lastScore: score,
+      bestScore: Math.max(previous.bestScore || 0, score),
       lastAt: new Date().toISOString(),
     };
     markStudyDay(state);
@@ -397,7 +426,9 @@ function progressWidth() {
       ? lessonsById.get(session.lessonId).exercises.length
       : session.kind === "placement"
         ? placement.items.length
-        : session.plan.length;
+        : session.kind === "reading"
+          ? readingsById.get(session.readingId).questions.length
+          : session.plan.length;
   return Math.round((session.index / total) * 100);
 }
 
@@ -428,13 +459,7 @@ function interactionHtml(exercise, options, chips) {
       .join("")}</div>
     <button class="btn" type="button" data-action="submit">Sjekk svar</button>`;
   }
-  const long = exercise.type === "rewrite" || exercise.type === "fix";
-  return `<form data-form="answer">
-    <label>${long ? "Din setning" : "Ord som mangler"}
-      ${long ? `<textarea data-draft lang="nb">${esc(mem.draft)}</textarea>` : `<input type="text" data-draft lang="nb" autocomplete="off" autocapitalize="off" value="${esc(mem.draft)}" />`}
-    </label>
-    <button class="btn" type="submit" data-action="submit">Sjekk svar</button>
-  </form>`;
+  return `<p class="note">Denne oppgaven skal besvares ved å velge eller trykke på ord.</p>`;
 }
 
 function vocabBlock(word, progressLabel) {
@@ -496,6 +521,7 @@ function renderHome() {
       <button class="btn" type="button" data-action="review">Start repetisjon</button>
     </article>
     ${job.lesson ? jobCard(job) : ""}
+    ${readingCard(suggestReading())}
     ${weakList()}
   `;
 }
@@ -505,9 +531,9 @@ function renderWelcome() {
     <section class="hero">
       <p class="kicker">Bokmål · 10–15 minutter</p>
       <h1>Hei, ${esc(name())}.</h1>
-      <p>En løype fra A1 til C1, med tettere stoff på B2 og C1, pluss jobbnorsk for e-post, status og møter.</p>
+      <p>Et kurs fra A1 til C1, med tettere stoff på B2 og C1, pluss jobbnorsk for e-post, status og møter.</p>
       <div class="english" lang="en">
-        <p>You took Norwegian at university and use English at work. This app keeps the interface in Norwegian and explains grammar in English. There is no assistant and no account. Progress stays in this browser, and you can export it.</p>
+        <p>You took Norwegian at university and use English at work. This app keeps the interface in Norwegian and explains grammar in English. There is no assistant in the exercises. Progress stays in this browser, and you can export it.</p>
       </div>
     </section>
     <article class="card">
@@ -534,6 +560,10 @@ function resumeCard(session) {
   if (session.kind === "review") {
     return `<article class="card"><h2>Repetisjonen er i gang</h2><a class="btn" href="#/ovelse">Fortsett</a></article>`;
   }
+  if (session.kind === "reading") {
+    const reading = readingsById.get(session.readingId);
+    return `<article class="card"><h2>Du er midt i en lesetekst</h2><p>${esc(reading?.title || "")}</p><a class="btn" href="#/lesing/${esc(session.readingId)}">Fortsett</a></article>`;
+  }
   return "";
 }
 
@@ -558,6 +588,50 @@ function jobCard(job) {
   </article>`;
 }
 
+function suggestReading() {
+  const order = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const rank = order.indexOf(state.profile?.level || "B1");
+  const ranked = [...readings].sort((a, b) => Math.abs(order.indexOf(a.level) - rank) - Math.abs(order.indexOf(b.level) - rank));
+  return ranked.find((item) => !state.readings?.[item.id]?.completed) || ranked[0];
+}
+
+function readingCard(reading) {
+  if (!reading) return "";
+  const done = state.readings?.[reading.id]?.completed;
+  return `<article class="card">
+    <p class="kicker">Lesing · ${esc(reading.level)} · ${reading.minutes} min</p>
+    <h2>${esc(reading.title)}</h2>
+    <p class="en" lang="en">${esc(reading.titleEn)}</p>
+    <p>${done ? "Du har lest denne. Du kan høre den igjen." : "En tekst med ferdig innspilt opplesning, så du kan høre uttalen."}</p>
+    <a class="btn secondary" href="#/lesing/${esc(reading.id)}">Åpne teksten</a>
+  </article>`;
+}
+
+function beginReadingQuestions(id) {
+  const reading = readingsById.get(id);
+  if (!reading) return;
+  ensureProfile(reading.level === "C2" ? "C1" : reading.level);
+  const same = state.session?.kind === "reading" && state.session.readingId === id && !state.session.finalized;
+  if (!same) {
+    state.session = {
+      kind: "reading",
+      readingId: id,
+      phase: "quiz",
+      index: 0,
+      answers: [],
+      finalized: false,
+    };
+  } else {
+    state.session.phase = "quiz";
+  }
+  resetAnswer();
+  mem.hideText = false;
+  focusMode = "route";
+  save();
+  if (location.hash === `#/lesing/${id}`) render();
+  else go(`#/lesing/${id}`);
+}
+
 function weakList() {
   const ranked = concepts
     .map((concept) => ({ concept, mastery: conceptMastery(state, concept.id), attempts: state.concepts[concept.id]?.attempts || 0 }))
@@ -574,7 +648,7 @@ function renderPath() {
   const recommended = state.profile ? recommendLesson(state, lessons) : null;
   const groups = ["A1", "A2", "B1", "B2", "C1"];
   return `
-    <h1>Løype</h1>
+    <h1>Kurs</h1>
     <p class="en" lang="en"><span class="en-label">EN</span> Nothing is locked. The daily pick still prefers your level and your weak concepts.</p>
     ${groups
       .map((level) => {
@@ -582,7 +656,8 @@ function renderPath() {
         return `<h2>${level}</h2>${items.map((lesson) => lessonRow(lesson, recommended?.id === lesson.id)).join("")}`;
       })
       .join("")}
-    <p class="fine">C2 er et mulig resultat på nivåtesten. Løypa stopper på C1, og repetisjonen vekter da de vanskeligste emnene.</p>
+    <p class="fine">C2 er et mulig resultat på nivåtesten. Kurset har leksjoner til og med C1, og repetisjonen vekter da de vanskeligste emnene.</p>
+    <p><a class="btn secondary" href="#/lesing">Lesetekster med opplesning</a></p>
   `;
 }
 
@@ -602,7 +677,7 @@ function renderJob() {
   const job = jobSuggestion(state, lessons);
   return `
     <h1>Jobbnorsk</h1>
-    <p>E-post, status til ledelsen, referat, tall og høflig uenighet. Én leksjon i uka er nok ved siden av dagsløypa.</p>
+    <p>E-post, status til ledelsen, referat, tall og høflig uenighet. Én leksjon i uka er nok ved siden av de andre leksjonene.</p>
     <p class="en" lang="en"><span class="en-label">EN</span> Written for an IT controller at an airport company: formal, but not stiff.</p>
     ${jobLessons
       .map((lesson) => {
@@ -623,6 +698,7 @@ function renderDash() {
       <div class="stat"><b>${completedCount()}/${lessons.length}</b><span>leksjoner</span></div>
       <div class="stat"><b>${dueCount(state)}</b><span>forfalte kort</span></div>
     </div>
+    <p>Lesetekster: <strong>${Object.values(state.readings).filter((item) => item.completed).length}/${readings.length}</strong>. <a href="#/lesing">Åpne lesing</a></p>
     <p>Nivå: <strong>${esc(state.profile?.level || "ikke valgt")}</strong>. ${
       state.profile?.placement ? `Siste test: ${state.profile.placement.score} %, foreslått ${esc(state.profile.placement.suggested)}.` : "Du har ikke en lagret test ennå."
     }</p>
@@ -659,7 +735,8 @@ function conceptMeter(concept) {
 function renderMore() {
   return `
     <h1>Mer</h1>
-    <article class="card"><h2>Ordbank</h2><p>${allVocab().length} oppslag fra løypa og en ekstra bank.</p><a class="btn" href="#/ord">Åpne ordbanken</a></article>
+    <article class="card"><h2>Lesing</h2><p>${readings.length} tekster med innspilt opplesning.</p><a class="btn" href="#/lesing">Åpne lesetekstene</a></article>
+    <article class="card"><h2>Ordbank</h2><p>${allVocab().length} oppslag fra kurset og en ekstra bank.</p><a class="btn" href="#/ord">Åpne ordbanken</a></article>
     <article class="card"><h2>Innstillinger</h2><p>Nivå, eksport og import av fremgang.</p><a class="btn" href="#/innstillinger">Åpne innstillinger</a></article>
     <article class="card"><h2>Om</h2><p>Bokmål, forklaringer på engelsk, ferdigskrevne øvelser. Fremgangen ligger i denne nettleseren.</p><a class="btn secondary" href="#/om">Les om appen</a></article>
   `;
@@ -726,12 +803,15 @@ function renderSettings() {
     <button class="btn secondary" type="button" data-action="start-placement">Ta testen på nytt</button>
     <h2>Nullstill</h2>
     <button class="btn ghost" type="button" data-action="reset-ask">Slett fremgang på denne enheten</button>
+    <h2>Utlogging</h2>
+    <p>Fremgangen blir liggende i nettleseren. Neste gang må du skrive passordet hvis du ikke har huket av for å bli husket.</p>
+    <button class="btn ghost" type="button" data-action="logout">Logg ut</button>
   `;
 }
 
 function renderLesson(id) {
   const lesson = lessonsById.get(id);
-  if (!lesson) return `<h1>Fant ikke leksjonen</h1><a class="btn" href="#/loyper">Til løypa</a>`;
+  if (!lesson) return `<h1>Fant ikke leksjonen</h1><a class="btn" href="#/kurs">Til kurset</a>`;
   if (!state.session || state.session.kind !== "lesson" || state.session.lessonId !== id) {
     return `<h1>${esc(lesson.title)}</h1><p>${esc(lesson.maal)}</p><button class="btn" type="button" data-action="open-lesson" data-id="${esc(id)}">Start</button>`;
   }
@@ -830,18 +910,101 @@ function renderResult(title, session) {
     <div class="row">
       <a class="btn" href="#/">I dag</a>
       <a class="btn secondary" href="#/fremgang">Fremgang</a>
+      ${session.kind === "reading" ? `<a class="btn ghost" href="#/lesing">Flere tekster</a>` : ""}
     </div>
   `;
+}
+
+function renderLogin() {
+  return `
+    <section class="hero">
+      <p class="kicker">Norsk hver dag</p>
+      <h1>Logg inn</h1>
+      <p>Skriv passordet for å åpne øvelsene.</p>
+      <div class="english" lang="en">
+        <p>This is only a lock on the page, not an account. Progress still stays in this browser.</p>
+      </div>
+    </section>
+    <form data-form="login">
+      <label>Passord
+        <input type="password" data-login autocomplete="current-password" />
+      </label>
+      <label class="check"><input type="checkbox" data-remember checked /> Husk meg på denne enheten</label>
+      ${loginNote ? `<p class="note" role="alert">${esc(loginNote)}</p>` : ""}
+      <button class="btn full" type="submit">Logg inn</button>
+    </form>
+  `;
+}
+
+function renderReadingList() {
+  return `
+    <h1>Lesing</h1>
+    <p>Korte tekster du kan lese og høre. Opplesningen ligger som en lydfil, så du kan sjekke uttalen uten nett.</p>
+    <p class="en" lang="en"><span class="en-label">EN</span> The recording is the same text, read aloud in bokmål. Use it as a pronunciation reference.</p>
+    ${readings
+      .map((reading) => {
+        const done = state.readings?.[reading.id]?.completed;
+        return `<article class="lesson-card ${done ? "done" : ""}">
+          <p class="meta">${esc(reading.level)} · ${reading.minutes} min</p>
+          <h3>${esc(reading.title)}</h3>
+          <p class="en" lang="en">${esc(reading.titleEn)}</p>
+          <p class="fine">${done ? `Lest · ${state.readings[reading.id].bestScore} %` : "Ikke lest"}</p>
+          <a class="btn" href="#/lesing/${esc(reading.id)}">Åpne</a>
+        </article>`;
+      })
+      .join("")}
+  `;
+}
+
+function renderReading(id) {
+  const reading = readingsById.get(id);
+  if (!reading) return `<h1>Fant ikke teksten</h1><a class="btn" href="#/lesing">Til lesing</a>`;
+  const session = state.session;
+  const active = session?.kind === "reading" && session.readingId === id && !session.finalized;
+  if (!active || session.phase === "read") {
+    return `
+      <p class="kicker">${esc(reading.level)} · ${reading.minutes} min</p>
+      <h1>${esc(reading.title)}</h1>
+      <p class="en" lang="en">${esc(reading.titleEn)}</p>
+      <audio controls preload="none" src="${esc(reading.audio)}">
+        Nettleseren spiller ikke lydfilen. Du kan fortsatt lese teksten.
+      </audio>
+      <p class="fine">Stemmen er bokmål. Spill av lydfilen mens du følger teksten, eller skjul teksten og hør først.</p>
+      <button class="btn ghost" type="button" data-action="toggle-text" aria-pressed="${mem.hideText}">${mem.hideText ? "Vis teksten" : "Skjul teksten"}</button>
+      ${
+        mem.hideText
+          ? `<p class="note">Teksten er skjult. Trykk på spill av.</p>`
+          : `<article class="reading">${reading.text.map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}</article>`
+      }
+      <button class="btn" type="button" data-action="start-reading" data-id="${esc(id)}">Til spørsmålene</button>
+    `;
+  }
+  if (session.phase === "done") return renderResult(reading.title, session);
+  const task = currentTask();
+  if (!task?.exercise) return `<h1>Spørsmålet mangler</h1><a class="btn" href="#/lesing">Til lesing</a>`;
+  return exerciseBlock(task.exercise, `Spørsmål ${session.index + 1} av ${reading.questions.length}`);
 }
 
 function render() {
   const current = route();
   const main = document.getElementById("main");
+  document.body.classList.toggle("locked", !isAuthed());
+  if (!isAuthed()) {
+    main.innerHTML = renderLogin();
+    document.title = "Norsk hver dag · logg inn";
+    if (focusMode === "route") main.querySelector("h1")?.focus();
+    focusMode = "none";
+    return;
+  }
   const view =
     current.name === "home"
       ? renderHome()
-      : current.name === "loyper"
+      : current.name === "kurs"
         ? renderPath()
+        : current.name === "lesing"
+          ? current.id
+            ? renderReading(current.id)
+            : renderReadingList()
         : current.name === "jobb"
           ? renderJob()
           : current.name === "fremgang"
@@ -862,7 +1025,7 @@ function render() {
                           ? renderReview()
                           : `<h1>Fant ikke siden</h1><a class="btn" href="#/">Hjem</a>`;
   main.innerHTML = view;
-  const tab = ["ord", "innstillinger", "om"].includes(current.name) ? "mer" : current.name;
+  const tab = ["ord", "innstillinger", "om", "lesing"].includes(current.name) ? "mer" : current.name;
   for (const link of document.querySelectorAll(".tabbar a")) {
     if ((link.dataset.tab || "home") === (tab || "home")) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
@@ -912,6 +1075,17 @@ function onClick(event) {
   if (action === "submit") submitCurrent();
   if (action === "next") nextStep();
   if (action === "open-lesson") startLesson(button.dataset.id, button.dataset.fresh === "true");
+  if (action === "start-reading") beginReadingQuestions(button.dataset.id);
+  if (action === "toggle-text") {
+    mem.hideText = !mem.hideText;
+    render();
+  }
+  if (action === "logout") {
+    sessionStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(AUTH_KEY);
+    loginNote = "";
+    render();
+  }
   if (action === "review") startReview();
   if (action === "start-placement") startPlacement();
   if (action === "pick-level") confirmLevel(button.dataset.level, "manual");
@@ -994,7 +1168,29 @@ async function onChange(event) {
   }
 }
 
+function submitLogin() {
+  const input = document.querySelector("[data-login]");
+  const remember = document.querySelector("[data-remember]")?.checked;
+  if ((input?.value || "") === PAGE_PASSWORD) {
+    sessionStorage.setItem(AUTH_KEY, "1");
+    if (remember) localStorage.setItem(AUTH_KEY, "1");
+    else localStorage.removeItem(AUTH_KEY);
+    loginNote = "";
+    focusMode = "route";
+    render();
+    return;
+  }
+  loginNote = "Feil passord. Prøv igjen.";
+  render();
+  document.querySelector("[data-login]")?.focus();
+}
+
 function onSubmit(event) {
+  if (event.target.matches("[data-form='login']")) {
+    event.preventDefault();
+    submitLogin();
+    return;
+  }
   if (!event.target.matches("[data-form='answer']")) return;
   event.preventDefault();
   submitCurrent();

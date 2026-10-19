@@ -6,9 +6,10 @@ import { lessonsB2 } from "./lessons-b2.js";
 import { lessonsC1 } from "./lessons-c1.js";
 import { lessonsJobb } from "./lessons-jobb.js";
 import { placement } from "./placement.js";
+import { readingMap, readings } from "./readings.js";
 import { vocabBank } from "./vocab-bank.js";
 
-export { LEVELS, conceptById, concepts, placement, vocabBank };
+export { LEVELS, conceptById, concepts, placement, readingMap, readings, vocabBank };
 
 export const lessons = [
   ...lessonsA1,
