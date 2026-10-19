@@ -1,3 +1,4 @@
+import { existsSync, statSync } from "node:fs";
 import { checkExercise } from "../js/check.js";
 import { buildReview, masteryOf, recommendLesson, suggestLevel } from "../js/adapt.js";
 import { freshState } from "../js/storage.js";
@@ -11,6 +12,7 @@ import {
   jobLessons,
   lessons,
   placement,
+  readings,
 } from "../data/catalog.js";
 
 const errors = [];
@@ -48,10 +50,6 @@ function checkExerciseShape(exercise, label) {
     if (new Set(exercise.options).size !== exercise.options.length) fail(`${exercise.id} has duplicate options`);
     if (!exercise.options.includes(exercise.answer)) fail(`${exercise.id} answer is not one of the options`);
     nonEmpty(exercise.answer, `${exercise.id} answer`);
-  } else if (exercise.type === "fill") {
-    if (!String(exercise.text || "").includes("___")) fail(`${exercise.id} fill text needs ___`);
-    if (!Array.isArray(exercise.answers) || exercise.answers.length === 0) fail(`${exercise.id} needs answers`);
-    exercise.answers.forEach((answer, index) => nonEmpty(answer, `${exercise.id} answer ${index}`));
   } else if (exercise.type === "order") {
     if (!Array.isArray(exercise.solution) || exercise.solution.length < 2) fail(`${exercise.id} needs a solution`);
     const available = counts(exercise.words || []);
@@ -60,13 +58,13 @@ function checkExerciseShape(exercise, label) {
       if (!left) fail(`${exercise.id} solution token missing from words: ${token}`);
       available.set(token, left - 1);
     }
-  } else if (exercise.type === "fix" || exercise.type === "rewrite") {
-    nonEmpty(exercise.type === "fix" ? exercise.wrong : exercise.source, `${exercise.id} source`);
-    if (!Array.isArray(exercise.answers) || exercise.answers.length === 0) fail(`${exercise.id} needs answers`);
-    exercise.answers.forEach((answer, index) => nonEmpty(answer, `${exercise.id} answer ${index}`));
   } else {
-    fail(`${exercise.id} has unknown type ${exercise.type}`);
+    fail(`${exercise.id} has unknown type ${exercise.type}. Use mc or order only.`);
   }
+  if (exercise.type === "mc" && exercise.text && !String(exercise.text).includes("___")) {
+    fail(`${exercise.id} gap text should contain ___`);
+  }
+  if (/^skriv\b/i.test(exercise.prompt)) fail(`${exercise.id} still asks the learner to type`);
 }
 
 if (lessons.length < 40) fail(`Expected at least 40 lessons, found ${lessons.length}`);
@@ -141,8 +139,32 @@ for (const concept of concepts) {
     fail(`Concept ${concept.id} is never exercised`);
   }
 }
-for (const type of ["mc", "fill", "order", "fix", "rewrite"]) {
+for (const type of ["mc", "order"]) {
   if (!types.has(type)) fail(`Missing exercise type ${type}`);
+}
+if ([...types].some((type) => type !== "mc" && type !== "order")) {
+  fail(`Only mc and order are allowed, found ${[...types].join(", ")}`);
+}
+
+if (readings.length < 6) fail(`Expected at least 6 readings, found ${readings.length}`);
+const readingIds = new Set();
+for (const reading of readings) {
+  if (readingIds.has(reading.id)) fail(`Duplicate reading id ${reading.id}`);
+  readingIds.add(reading.id);
+  if (!levels.has(reading.level)) fail(`${reading.id} has bad level`);
+  nonEmpty(reading.title, `${reading.id} title`);
+  nonEmpty(reading.audio, `${reading.id} audio`);
+  if (!reading.audio.endsWith(".mp3")) fail(`${reading.id} audio must be an mp3`);
+  if (!existsSync(reading.audio)) fail(`${reading.id} missing audio file ${reading.audio}`);
+  else if (statSync(reading.audio).size < 8000) fail(`${reading.id} audio file is too small`);
+  const text = reading.text.join(" ");
+  if (text.split(/\s+/).length < 75) fail(`${reading.id} text is too short`);
+  if (!/[æøåÆØÅ]/.test(text)) fail(`${reading.id} text has no Norwegian letters`);
+  if (!Array.isArray(reading.questions) || reading.questions.length < 3) fail(`${reading.id} needs at least 3 questions`);
+  for (const exercise of reading.questions) {
+    checkExerciseShape(exercise, reading.id);
+    if (exercise.type !== "mc") fail(`${exercise.id} reading questions must be multiple choice`);
+  }
 }
 
 const sample = lessons[0].exercises.find((exercise) => exercise.type === "mc");
@@ -209,6 +231,7 @@ if (errors.length) {
   process.exit(1);
 }
 
+const lessonExercises = lessons.reduce((sum, lesson) => sum + lesson.exercises.length, 0);
 console.log(
-  `OK: ${lessons.length} lessons (${coreLessons.length} core, ${jobLessons.length} jobb), ${exerciseIds.size} exercises, ${headwords.size} vocabulary items, ${placement.items.length} placement items, ${concepts.length} concepts.`,
+  `OK: ${lessons.length} lessons (${coreLessons.length} core, ${jobLessons.length} jobb), ${lessonExercises} lesson exercises, ${readings.length} readings, ${headwords.size} vocabulary items, ${placement.items.length} placement items, ${concepts.length} concepts.`,
 );

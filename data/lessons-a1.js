@@ -217,7 +217,7 @@ At this stage, use the ending alone when there is no adjective: rapporten, not "
     exercises: [
       fill(
         "definite",
-        "Skriv den bestemte formen.",
+        "Velg den bestemte formen.",
         "Jeg sender ___ i dag.",
         ["rapporten"],
         "en rapport → rapporten. The English word “the” is an ending here.",
@@ -225,7 +225,7 @@ At this stage, use the ending alone when there is no adjective: rapporten, not "
       ),
       fill(
         "definite",
-        "Skriv den bestemte formen av «et møte».",
+        "Velg den bestemte formen av «et møte».",
         "___ starter klokka ni.",
         ["Møtet", "møtet"],
         "et møte → møtet. Do not write møteet.",

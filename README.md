@@ -1,17 +1,19 @@
 # Norsk hver dag
 
-Statisk øvelsesbok i bokmål, fra A1 til C1, med en egen jobb-løype. Forklaringene er på engelsk. Selve øvelsene, eksemplene og grensesnittet er på norsk. Ingenting hentes fra et nettsted eller en språkmodell mens du øver. Alt ligger i filene.
+Statisk øvelsesbok i bokmål, fra A1 til C1, med et eget jobbkurs og lesetekster med opplesning. Forklaringene er på engelsk. Selve øvelsene, eksemplene og grensesnittet er på norsk. Ingenting hentes fra et nettsted mens du øver. Alt ligger i filene.
 
 Appen er laget for daglig øving på 10–15 minutter: en som har tatt norskkurs, men som jobber på engelsk og trenger både grammatikk og et ryddig, formelt skriftspråk.
 
 ## Slik bruker du den
 
-1. Åpne appen. Første gang får du en nivåtest på omtrent 15–20 minutter, eller du velger nivå selv.
-2. **I dag** foreslår én leksjon. Valget legger vekt på nivået ditt og emnene du kan minst.
-3. Les den korte forklaringen, gå gjennom ordene, og svar på øvelsene. Du får fasit med én gang.
-4. **Repetisjon** blander omtrent 70 % fra svake emner med 30 % repetisjon. Ord og oppgaver du bommer på, kommer tilbake senere.
-5. **Jobbnorsk** er én leksjon i uka: e-post, status, referat, tall og høflig uenighet.
-6. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne.
+1. Åpne appen og logg inn. Passordet er `Tsvitana`. Huk av «Husk meg på denne enheten» på telefonen, så slipper du å skrive det hver dag. Det er en enkel lås på siden, ikke en konto.
+2. Første gang får du en nivåtest på omtrent 15–20 minutter, eller du velger nivå selv.
+3. **I dag** foreslår én leksjon. Valget legger vekt på nivået ditt og emnene du kan minst.
+4. Les den korte forklaringen, gå gjennom ordene, og svar på øvelsene. Du får fasit med én gang. Oppgavene er flervalg eller ord du trykker sammen. Du skal ikke skrive hele setninger selv.
+5. **Repetisjon** blander omtrent 70 % fra svake emner med 30 % repetisjon. Ord og oppgaver du bommer på, kommer tilbake senere.
+6. **Jobbnorsk** er én leksjon i uka: e-post, status, referat, tall og høflig uenighet.
+7. **Lesing**, under Mer, har tekster med ferdig innspilt opplesning. Spill av lydfilen når du vil høre uttalen.
+8. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne.
 
 Fremgangen lagres i nettleseren (`localStorage`). Den følger ikke med til en annen telefon av seg selv.
 
@@ -26,7 +28,7 @@ Ta vare på filen hvis du bytter nettleser eller telefon.
 
 ### Nivå
 
-Du kan ta testen på nytt, eller sette nivå manuelt. C2 kan komme ut av testen. Løypa har leksjoner til og med C1. På C2 prioriterer repetisjonen de vanskeligste emnene, og jobb-løypa holder skriftspråket i gang.
+Du kan ta testen på nytt, eller sette nivå manuelt. C2 kan komme ut av testen. Kurset har leksjoner til og med C1. På C2 prioriterer repetisjonen de vanskeligste emnene, og jobbleksjonene holder skriftspråket i gang.
 
 ## Kom i gang
 
@@ -61,7 +63,7 @@ Leksjonene ligger i `data/`, én fil per nivå:
 | `data/lessons-c1.js` | C1 |
 | `data/lessons-jobb.js` | Jobbnorsk |
 
-Hjelpefunksjonene `lesson`, `mc`, `fill`, `order`, `fix` og `rewrite` ligger i `data/build.js`. En leksjon ser slik ut:
+Hjelpefunksjonene `lesson`, `mc`, `fill`, `order`, `fix` og `rewrite` ligger i `data/build.js`. `fill`, `fix` og `rewrite` blir til flervalg når leksjonen bygges, slik at flere riktige formuleringer ikke blir markert feil. En leksjon ser slik ut:
 
 ```js
 lesson({
@@ -98,15 +100,17 @@ Krav som valideringen håndhever:
 - Fasit må være med. For flervalg må svaret være ett av alternativene. For ordfølge må hvert ord i løsningen finnes blant brikkene.
 - Jobb-leksjoner får `track: "jobb"`.
 
-Øvelsestyper:
+Øvelsestyper som eleven ser:
 
-- `mc` — flervalg
-- `fill` — ett eller flere godkjente ord i en `___`
-- `order` — sett sammen setningen av ord
-- `fix` — setning med feil, ett eller flere godkjente rettelser
-- `rewrite` — uformell setning inn, formell setning som fasit
+- `mc` — ferdige svaralternativer
+- `order` — sett sammen setningen ved å trykke på ordene som ligger i oppgaven
 
-Skriv flere godkjente svar der bokmål har to like gode former, for eksempel `uka` og `uken`. Tegnsettingsøvelser sammenligner komma. Andre øvelser godtar svar med eller uten komma.
+I kildefilene kan du fortsatt skrive `fill`, `fix` og `rewrite`. De blir lukket automatisk:
+
+- `fill` blir flervalg for ordet som mangler. Legg alternativene i `data/gap-choices.js` med samme id som øvelsen, for eksempel `b2-01-e2`. Ikke legg en annen godkjent form inn som feil svar.
+- `fix` og `rewrite` blir flervalg mellom den første godkjente setningen og utgangspunktet.
+
+Lesetekster ligger i `data/readings.js`. Hver tekst har en mp3 i `audio/` med samme navn som id-en. Lydfilene er lest inn med den norske stemmen `nb-NO-PernilleNeural` og ligger i repositoriet, så de virker uten nett. Nye filer kan lages med `node scripts/build-audio.mjs` hvis `edge-tts` er installert.
 
 Ekstra ord som ikke hører til én leksjon, legges i `data/vocab-bank.js`.
 

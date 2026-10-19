@@ -242,7 +242,7 @@ Aldri, alltid and ofte are sentence adverbs in the same position when they comme
       ),
       fill(
         "v2",
-        "Fyll inn ikke på riktig plass. Skriv bare ordet.",
+        "Velg ordet som skal inn på riktig plass.",
         "I morgen kan jeg ___ komme.",
         ["ikke"],
         "Kan is the finite verb. After inversion the order is kan jeg ikke komme.",

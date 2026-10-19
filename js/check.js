@@ -10,7 +10,8 @@ export function normalize(value, { ignoreComma = false } = {}) {
 
 export function checkExercise(exercise, input) {
   if (exercise.type === "mc") {
-    return { ok: input === exercise.answer, expected: exercise.answer };
+    const accepted = Array.isArray(exercise.answers) && exercise.answers.length ? exercise.answers : [exercise.answer];
+    return { ok: accepted.includes(input), expected: exercise.answer };
   }
   if (exercise.type === "order") {
     const given = Array.isArray(input) ? input : [];

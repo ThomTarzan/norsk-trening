@@ -73,7 +73,8 @@ async function evaluate(expression) {
     returnByValue: true,
   });
   if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.text || "evaluate failed");
+    const details = result.exceptionDetails;
+    throw new Error(details.exception?.description || details.text || "evaluate failed");
   }
   return result.result?.value;
 }
@@ -84,6 +85,24 @@ try {
   await send("Page.enable");
   await send("Page.navigate", { url: "http://127.0.0.1:8765/" });
   await wait(800);
+  await evaluate("localStorage.clear(); sessionStorage.clear();");
+  await send("Page.reload", { ignoreCache: true });
+  await wait(800);
+  const gate = await evaluate("document.querySelector('h1')?.textContent");
+  if (gate !== "Logg inn") throw new Error(`Expected login, got ${gate}`);
+  await evaluate(`(() => {
+    document.querySelector("[data-login]").value = "feil";
+    document.querySelector("[data-form=login]").requestSubmit();
+  })()`);
+  await wait(200);
+  const rejected = await evaluate("document.body.innerText.includes('Feil passord')");
+  if (!rejected) throw new Error("Wrong password was accepted");
+  await evaluate(`(() => {
+    document.querySelector("[data-login]").value = "Tsvitana";
+    document.querySelector("[data-remember]").checked = true;
+    document.querySelector("[data-form=login]").requestSubmit();
+  })()`);
+  await wait(300);
   const welcome = await evaluate("document.querySelector('h1')?.textContent");
   if (!welcome?.includes("Tsvitana")) throw new Error(`Unexpected welcome: ${welcome}`);
 
@@ -128,6 +147,30 @@ try {
   const job = await evaluate("document.body.innerText.includes('E-post som blir lest')");
   if (!job) throw new Error("Job track missing");
 
+  await send("Page.navigate", { url: "http://127.0.0.1:8765/#/lesing/les-b2-01" });
+  await wait(400);
+  const reading = await evaluate("document.querySelector('h1')?.textContent");
+  if (reading !== "Status til ledelsen") throw new Error(`Reading title: ${reading}`);
+  const audio = await evaluate("document.querySelector('audio')?.getAttribute('src')");
+  if (audio !== "audio/les-b2-01.mp3") throw new Error(`Reading audio: ${audio}`);
+  await evaluate("document.querySelector('[data-action=start-reading]').click()");
+  await wait(250);
+  const asked = await evaluate("document.querySelector('h1')?.textContent");
+  if (!asked?.includes("skyldes")) throw new Error(`Reading question: ${asked}`);
+
+  await send("Page.navigate", { url: "http://127.0.0.1:8765/#/leksjon/b2-10" });
+  await wait(300);
+  await evaluate("document.querySelector('[data-action=open-lesson]').click()");
+  await wait(150);
+  await evaluate("document.querySelector('[data-phase=words]').click()");
+  await wait(100);
+  await evaluate("document.querySelector('[data-phase=quiz]').click()");
+  await wait(200);
+  const typed = await evaluate("!!document.querySelector('textarea, input[data-draft]')");
+  if (typed) throw new Error("Lesson still asks for typed input");
+  const choices = await evaluate("document.querySelectorAll('.option, .chip').length");
+  if (choices < 2) throw new Error(`Expected choices, found ${choices}`);
+
   await send("Page.navigate", { url: "http://127.0.0.1:8765/#/ord" });
   await wait(400);
   const words = await evaluate("document.querySelectorAll('.word').length");
@@ -137,7 +180,7 @@ try {
     console.error(problems.join("\n"));
     process.exitCode = 1;
   } else {
-    console.log("Smoke OK: welcome, dashboard, placement, lesson feedback, job track, vocab. No console errors.");
+    console.log("Smoke OK: login, welcome, dashboard, placement, lesson, reading, job track, vocab. No console errors.");
   }
 } catch (error) {
   console.error(error);

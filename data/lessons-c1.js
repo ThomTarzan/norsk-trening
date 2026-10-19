@@ -176,7 +176,7 @@ Other phrases worth owning: på bakgrunn av tallene, i tråd med budsjettet, av 
       ),
       fill(
         "prepositions",
-        "Fyll inn uttrykket som betyr «in accordance with». Skriv tre ord.",
+        "Fyll inn uttrykket som betyr «in accordance with». Velg de tre ordene.",
         "___ budsjettet er vi innenfor rammen.",
         ["I henhold til", "i henhold til"],
         "The fixed expression is i henhold til. All three words belong in the blank: I henhold til budsjettet.",
@@ -571,7 +571,7 @@ I all hovedsak and kort sagt are useful when you close a paragraph: Kort sagt er
       ),
       fill(
         "register",
-        "Fyll inn uttrykket som betyr «largely». Skriv tre ord.",
+        "Fyll inn uttrykket som betyr «largely». Velg de tre ordene.",
         "Tallene er ___ avstemt.",
         ["i all hovedsak"],
         "I all hovedsak softens a claim without hiding it. The figures are largely, not necessarily perfectly, reconciled.",
@@ -618,7 +618,7 @@ A good test: if you can say the sentence aloud to your manager without running o
       ),
       fill(
         "compounds",
-        "Skriv substantivet av «å øke» i bestemt form.",
+        "Velg substantivet av «å øke» i bestemt form.",
         "___ skyldes lisensprisene.",
         ["Økningen", "økningen"],
         "Å øke → en økning → økningen. The definite noun can be the theme of the sentence.",
@@ -751,7 +751,7 @@ Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not 
       ),
       fill(
         "punctuation",
-        "Skriv JA hvis det skal være komma foran som, og NEI hvis det ikke skal det. Setningen er restriktiv: «Filen som ligger i mappen, er ny.»",
+        "Velg JA hvis det skal være komma foran som, og NEI hvis det ikke skal det. Setningen er restriktiv: «Filen som ligger i mappen, er ny.»",
         "Svar: ___",
         ["NEI", "nei"],
         "Restrictive som has no comma in front of it. The comma in the given sentence, if you add one, belongs before er, not before som.",
@@ -821,7 +821,7 @@ These phrases like the first slot and therefore inversion: Etter det jeg kan se,
       ),
       fill(
         "register",
-        "Fyll inn uttrykket. Skriv tre ord.",
+        "Fyll inn uttrykket. Velg de tre ordene.",
         "Forslaget er ___ budsjettet.",
         ["i tråd med"],
         "I tråd med is the fixed prepositional expression. I henhold til is stricter, “in accordance with a rule”.",
@@ -851,7 +851,7 @@ These phrases like the first slot and therefore inversion: Etter det jeg kan se,
       ),
       fill(
         "register",
-        "Fyll inn. Skriv to ord.",
+        "Fyll inn. Velg de to ordene.",
         "Vi mangler ___ ett bilag.",
         ["blant annet"],
         "Blant annet introduces one example of a larger gap. It does not mean that the voucher is the only problem.",
@@ -946,7 +946,7 @@ Trenger ikke means "need not", and there is no obligation. Du trenger ikke å se
       ),
       fill(
         "modals",
-        "Fyll inn uttrykket som betyr at det ikke er nødvendig. Skriv to ord.",
+        "Fyll inn uttrykket som betyr at det ikke er nødvendig. Velg de to ordene.",
         "Du ___ svare i kveld.",
         ["trenger ikke"],
         "Trenger ikke removes the obligation. The infinitive may follow with or without å; the blank is only the two words.",

@@ -88,7 +88,7 @@ This is the single most useful word-order correction if your written Norwegian i
       ),
       fill(
         "adverb-sub",
-        "Fyll inn de to adverbene. Skriv dem med mellomrom.",
+        "Velg de to adverbene i riktig rekkefølge.",
         "Anna sier at hun ___ sender utkastet på søndag.",
         ["vanligvis ikke"],
         "Frequency adverb, then ikke, then the verb: vanligvis ikke sender.",
@@ -744,7 +744,7 @@ Lists of three do not take a comma before og: kostnader, inntekter og avvik.`,
       ),
       fill(
         "punctuation",
-        "Skriv JA hvis setningen trenger komma etter leddsetningen, og NEI hvis den ikke gjør det: «Hvis du vil kan vi ta det på norsk.»",
+        "Velg JA hvis setningen trenger komma etter leddsetningen, og NEI hvis den ikke gjør det: «Hvis du vil kan vi ta det på norsk.»",
         "Svar: ___",
         ["JA", "ja"],
         "The hvis-clause stands first, so a comma is required before kan: Hvis du vil, kan vi ta det på norsk.",
@@ -791,7 +791,7 @@ Plural and definite endings go on the end of the whole compound: statusrapporten
       ),
       fill(
         "compounds",
-        "Skriv sammensetningen av «budsjett» og «avvik».",
+        "Velg sammensetningen av «budsjett» og «avvik».",
         "Vi har et lite ___.",
         ["budsjettavvik"],
         "One word, no extra -s between budsjett and avvik: budsjettavvik. The noun is neuter: et budsjettavvik.",

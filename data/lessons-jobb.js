@@ -256,10 +256,10 @@ Eventuelt is the last agenda item, for business not listed in advance. Do not pu
       ),
       fill(
         "passive",
-        "Fyll inn ble-passiv. Skriv to ord: hjelpeverb og partisipp.",
+        "Fyll inn hjelpeverbet i ble-passiv.",
         "Saken ___ utsatt til 3. november.",
         ["ble"],
-        "The text already contains utsatt if the blank is only the auxiliary. Look again: «Saken ___ utsatt til 3. november.» The missing word is ble. Yes.",
+        "A finished event uses ble plus the participle. Utsatt is already in the sentence, so the blank is ble.",
       ),
       rewrite(
         "register",
@@ -469,7 +469,7 @@ Compounds you can trust: vinterdrift, rullebanen, punktlighetstall, driftsavbrud
       ),
       fill(
         "compounds",
-        "Skriv sammensetningen for winter operations. Ett ord.",
+        "Velg sammensetningen for winter operations. Ett ord.",
         "___ er i gang fra november.",
         ["Vinterdrift", "vinterdriften", "Vinterdriften"],
         "One word. The definite vinterdriften also fits the blank.",

@@ -1,6 +1,6 @@
-import { fill, fix, mc, order } from "./build.js";
+import { closeExercise, fill, fix, mc, order } from "./build.js";
 
-const item = (id, exercise) => ({ ...exercise, id });
+const item = (id, exercise) => closeExercise({ ...exercise, id });
 
 /** About 15–20 minutes. Discriminates A2 through C1; C2 is a very high score. */
 export const placement = {
