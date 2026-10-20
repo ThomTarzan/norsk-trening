@@ -98,6 +98,13 @@ In a report, thematisation is how paragraphs stay coherent. The theme is often s
         "A fronted object must be followed at once by the finite verb.",
       ),
     ],
+    produce: {
+      prompt: "Skriv to setninger der du løfter fram temaet før verbet.",
+      promptEn: "Write two sentences that put the topic before the verb.",
+      model: "Lisenskostnaden tar vi med i notatet. Driftskostnaden venter vi med.",
+      modelEn: "The licence cost we include in the note. The operating cost we leave for later.",
+      checks: ["Verbet står på plass to.", "Temaet er kjent for leseren.", "Setningene er helsetninger."],
+    },
   }),
   lesson({
     id: "c1-02",
@@ -961,6 +968,13 @@ Trenger ikke means "need not", and there is no obligation. Du trenger ikke å se
         "Pleier å is the habitual. The others are advice, permission or a plan.",
       ),
     ],
+    produce: {
+      prompt: "Skriv en kort anbefaling med bør, og en setning om hva mottakeren får lov til.",
+      promptEn: "Write a short recommendation with bør, and one sentence about what the reader is allowed to do.",
+      model: "Jeg anbefaler at vi venter. Du får lov til å sende notatet på fredag.",
+      modelEn: "I recommend that we wait. You may send the note on Friday.",
+      checks: ["bør står ikke inni at-setningen.", "Tillatelse er formulert med får lov til å.", "Det er ingen komma foran at."],
+    },
   }),
   lesson({
     id: "c1-11",

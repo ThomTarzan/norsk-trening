@@ -1,3 +1,4 @@
+import { longReadings } from "./readings-long.js";
 import { moreReadings } from "./readings-more.js";
 import { rq, sentencesOf, readingPlain } from "./reading-build.js";
 
@@ -272,6 +273,7 @@ const coreReadings = [
       [
         "Notat til ledelsen.",
         "I september lå lisenskostnaden fire prosent over budsjettet.",
+        "Sammenlignet med budsjettet er avviket fire prosent.",
         "Økningen skyldes en prisjustering hos leverandøren.",
         "Kostnaden føres på kostnadssted 410 og periodiseres over tolv måneder, i tråd med budsjettet.",
       ],
@@ -399,7 +401,7 @@ const coreReadings = [
   },
 ];
 
-export const readings = [...coreReadings, ...moreReadings];
+export const readings = [...coreReadings, ...moreReadings, ...longReadings];
 
 export function readingMap() {
   return new Map(readings.map((reading) => [reading.id, reading]));

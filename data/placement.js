@@ -1,6 +1,6 @@
 import { closeExercise, fill, fix, mc, order } from "./build.js";
 
-const item = (id, exercise) => closeExercise({ ...exercise, id });
+const item = (id, exercise, weight = 1, band = "B1") => ({ ...closeExercise({ ...exercise, id }), weight, band });
 
 /** About 15–20 minutes. Discriminates A2 through C1; C2 is a very high score. */
 export const placement = {
@@ -8,7 +8,7 @@ export const placement = {
   title: "Nivåtest",
   titleEn: "Placement test",
   intro:
-    "Twenty questions, without hints along the way. The result is a suggestion. You can retake the test or choose a level yourself. Explanations are in English at the end.",
+    "The questions get harder, and the difficult ones count for more. The topic is not shown above the question. The result is a suggestion. You can retake the test or choose a level yourself. Explanations are in English at the end.",
   items: [
     item(
       "pl-01",
@@ -209,5 +209,98 @@ export const placement = {
         "Imidlertid in the first slot is followed by the finite verb.",
       ),
     ),
+    item(
+      "pl-21",
+      mc(
+        "punctuation",
+        "Hvilken setning følger hovedregelen for komma?",
+        [
+          "Jeg blir fordi rapporten ikke er klar.",
+          "Jeg ser, at avviket er lite.",
+          "Jeg ser at tallene stemmer, og at avviket er lite.",
+          "Jeg skriver, og sender notatet.",
+        ],
+        "Jeg blir fordi rapporten ikke er klar.",
+        "A subordinate clause after the main clause normally has no comma. No comma before an at-object, no comma between two at-clauses joined by og, and no comma when the subject is shared.",
+      ),
+    ),
+    item(
+      "pl-22",
+      mc(
+        "particles",
+        "Hvilken setning bruker partikkelverbet riktig?",
+        [
+          "Jeg legger fram tallene i møtet.",
+          "Jeg legger tallene fram i møtet er den eneste muligheten.",
+          "Jeg framlegger tallene fram.",
+          "Jeg legger i møtet fram tallene først.",
+        ],
+        "Jeg legger fram tallene i møtet.",
+        "Legge fram means to present. The particle fram belongs with the verb. The second option claims to be the only possible order, which is too strong, and the others stack the particle twice or break the phrase.",
+      ),
+    ),
+    item(
+      "pl-23",
+      mc(
+        "hypothetical",
+        "Hvilken setning er en hypotetisk fortid?",
+        [
+          "Hvis vi hadde visst det, hadde vi ventet.",
+          "Hvis vi vet det, venter vi.",
+          "Hvis vi hadde visst det, venter vi i morgen.",
+          "Hvis vi visste det, har vi ventet.",
+        ],
+        "Hvis vi hadde visst det, hadde vi ventet.",
+        "A counterfactual past uses hadde plus the participle in the hvis-clause, and hadde plus the participle in the main clause.",
+      ),
+    ),
+    item(
+      "pl-24",
+      mc(
+        "indirect",
+        "Hvilken indirekte spørresetning er riktig?",
+        [
+          "Hun spurte om vi hadde sendt rapporten.",
+          "Hun spurte om hadde vi sendt rapporten.",
+          "Hun spurte at vi hadde sendt rapporten?",
+          "Hun spurte sendte vi rapporten.",
+        ],
+        "Hun spurte om vi hadde sendt rapporten.",
+        "An indirect question does not invert. Om introduces a yes/no question in reported speech, and the subject stays before the verb.",
+      ),
+    ),
   ],
 };
+
+const placementBand = {
+  "pl-01": ["A2", 1],
+  "pl-02": ["A2", 1],
+  "pl-03": ["B1", 1],
+  "pl-04": ["A2", 1],
+  "pl-05": ["B1", 1],
+  "pl-06": ["B1", 2],
+  "pl-07": ["B1", 2],
+  "pl-08": ["B2", 2],
+  "pl-09": ["B2", 2],
+  "pl-10": ["B1", 2],
+  "pl-11": ["B2", 2],
+  "pl-12": ["B2", 2],
+  "pl-13": ["B2", 2],
+  "pl-14": ["B1", 1],
+  "pl-15": ["B2", 2],
+  "pl-16": ["B2", 2],
+  "pl-17": ["C1", 3],
+  "pl-18": ["B2", 2],
+  "pl-19": ["B2", 2],
+  "pl-20": ["B2", 2],
+  "pl-21": ["C1", 3],
+  "pl-22": ["C1", 3],
+  "pl-23": ["C1", 3],
+  "pl-24": ["C1", 3],
+};
+
+for (const entry of placement.items) {
+  const [band, weight] = placementBand[entry.id] || ["B1", 1];
+  entry.band = band;
+  entry.weight = weight;
+}

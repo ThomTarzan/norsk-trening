@@ -100,6 +100,13 @@ Subject lines are noun phrases, not full letters: Status IT-kostnader september 
         "Write a short opening plus the point. Use Som avtalt.",
       ),
     ],
+    produce: {
+      prompt: "Skriv en kort e-post på fire-fem linjer: hei, formål, vedlegg, én forespørsel og hilsen.",
+      promptEn: "Write a short email: greeting, purpose, attachment, one request and a close.",
+      model: "Hei Kari. Som avtalt sender jeg statusrapporten. Vedlagt finner du tallene for september. Kunne du gi en tilbakemelding innen torsdag? Vennlig hilsen Tsvitana",
+      modelEn: "Hello Kari. As agreed I am sending the status report. The September figures are attached. Could you reply by Thursday? Kind regards, Tsvitana",
+      checks: ["Emnet kommer tidlig.", "Det er bare én forespørsel.", "Avslutningen er Vennlig hilsen, ikke De."],
+    },
   }),
   lesson({
     id: "jobb-02",

@@ -140,6 +140,55 @@ export const concepts = [
     stage: "Presisjon",
     blurb: "Komma etter innledende leddsetning. Etterstilt leddsetning har vanligvis ikke komma. Ikke komma foran at-objekt, og ikke mellom to at-setninger med og.",
   },
+  {
+    id: "particles",
+    name: "Partikkelverb",
+    nameEn: "Particle verbs",
+    stage: "Presisjon",
+    blurb: "Partikkelen hører til verbet: legge fram, sette opp. Den kan stå etter objektet.",
+  },
+  {
+    id: "verb-prep",
+    name: "Faste preposisjoner",
+    nameEn: "Verb-preposition pairs",
+    stage: "Presisjon",
+    blurb: "vente på, avhenge av, bidra til, enig i noe og enig med noen.",
+  },
+  {
+    id: "modal-particles",
+    name: "Modalpartikler",
+    nameEn: "Modal particles",
+    stage: "Presisjon",
+    blurb: "jo, vel, nok, da og visst står i midtfeltet og farger setningen.",
+  },
+  {
+    id: "clitics",
+    name: "Ubetonte pronomen",
+    nameEn: "Unstressed pronouns",
+    stage: "Presisjon",
+    blurb: "Ubetont objekt står gjerne foran ikke: Jeg så ham ikke.",
+  },
+  {
+    id: "indirect",
+    name: "Indirekte tale og spørsmål",
+    nameEn: "Reported speech and questions",
+    stage: "Presisjon",
+    blurb: "at innleder utsagn. om og spørreord innleder spørsmål uten inversjon.",
+  },
+  {
+    id: "hypothetical",
+    name: "Hypotetisk hvis",
+    nameEn: "Counterfactual hvis",
+    stage: "Presisjon",
+    blurb: "Hvis vi hadde visst det, hadde vi ventet. Komma etter den innledende leddsetningen.",
+  },
+  {
+    id: "presentative",
+    name: "Presenteringssetninger",
+    nameEn: "Presentative sentences",
+    stage: "Presisjon",
+    blurb: "Det kom en e-post. Det nye leddet kommer etter verbet.",
+  },
 ];
 
 export const conceptById = Object.fromEntries(concepts.map((concept) => [concept.id, concept]));

@@ -1,11 +1,13 @@
 import { existsSync, statSync } from "node:fs";
 import { checkExercise, gradeDictation } from "../js/check.js";
-import { buildReview, masteryOf, recommendLesson, suggestLevel } from "../js/adapt.js";
+import { buildReview, masteryOf, recommendLesson, suggestLevel, suggestLevelFromAnswers } from "../js/adapt.js";
 import { freshState } from "../js/storage.js";
 import { shuffleBank, shuffleOptions } from "../js/util.js";
 import { groupVocab } from "../js/vocab-groups.js";
 import { vocabAudio } from "../data/vocab-audio.js";
-import { sentencesOf } from "../data/readings.js";
+import { pronunciationItems } from "../data/pronunciation.js";
+import { readingPlain, sentencesOf } from "../data/readings.js";
+import { clipAudio } from "../data/clip-audio.js";
 import {
   LEVELS,
   allVocab,
@@ -140,8 +142,16 @@ for (const word of allVocab()) {
 const headwords = new Set(allVocab().map((word) => word.no.trim().toLowerCase()));
 if (headwords.size < 300) fail(`Expected at least 300 vocabulary items, found ${headwords.size}`);
 
-if (placement.items.length < 18 || placement.items.length > 24) {
+if (placement.items.length < 22 || placement.items.length > 28) {
   fail(`Placement has ${placement.items.length} items`);
+}
+const hardWeight = placement.items.filter((item) => item.band === "C1").reduce((sum, item) => sum + item.weight, 0);
+if (hardWeight < 9) fail("Placement needs enough C1 weight");
+const perfect = placement.items.map(() => ({ ok: true }));
+const missedHard = placement.items.map((item) => ({ ok: item.band !== "C1" }));
+if (suggestLevelFromAnswers(perfect, placement.items) !== "C2") fail("A perfect weighted placement should suggest C2");
+if (suggestLevelFromAnswers(missedHard, placement.items) === "C1" || suggestLevelFromAnswers(missedHard, placement.items) === "C2") {
+  fail("Missing every C1 item should not suggest C1 or C2");
 }
 for (const exercise of placement.items) checkExerciseShape(exercise, "placement");
 
@@ -158,6 +168,14 @@ if ([...types].some((type) => type !== "mc" && type !== "order")) {
 }
 
 if (readings.length < 20) fail(`Expected at least 20 readings, found ${readings.length}`);
+const longC1 = readings.filter((reading) => reading.level === "C1" && readingPlain(reading).split(/\s+/).filter(Boolean).length >= 300);
+if (longC1.length < 4) fail(`Expected at least 4 C1 readings of 300 words, found ${longC1.length}`);
+const dialogues = readings.filter((reading) => reading.dialogue);
+if (dialogues.length < 3) fail(`Expected at least 3 two-voice dialogues, found ${dialogues.length}`);
+for (const reading of dialogues) {
+  const voices = new Set(sentencesOf(reading).map((sentence) => sentence.voice));
+  if (voices.size < 2) fail(`${reading.id} should use two voices`);
+}
 const readingIds = new Set();
 for (const reading of readings) {
   if (readingIds.has(reading.id)) fail(`Duplicate reading id ${reading.id}`);
@@ -191,6 +209,17 @@ for (const reading of readings) {
 }
 
 const ordbank = groupVocab(allVocab());
+for (const lesson of lessons) {
+  for (const example of lesson.examples) {
+    const key = example.no.replace(/\s+/g, " ").trim();
+    const path = clipAudio[key];
+    if (!path || !existsSync(path) || statSync(path).size < 400) fail(`Missing example audio for ${lesson.id}: ${key}`);
+  }
+}
+for (const item of pronunciationItems()) {
+  const path = `audio/uttale/${item.id}.mp3`;
+  if (!existsSync(path) || statSync(path).size < 400) fail(`Missing pronunciation audio ${path}`);
+}
 if (!ordbank.some((group) => group.display === "ei/en uke")) fail("Expected ei uke and en uke to merge as ei/en uke");
 if (ordbank.some((group) => group.display === "ei uke" || group.display === "en uke")) fail("ei uke / en uke should not stay as separate ordbank rows");
 for (const group of ordbank) {
@@ -258,7 +287,8 @@ for (const exercise of allExercises.filter((entry) => entry.type === "mc")) {
 for (const exercise of allExercises.filter((entry) => entry.type === "order")) {
   if (new Set(exercise.words).size < 2) continue;
   for (let run = 0; run < 100; run += 1) {
-    const bank = shuffleBank(exercise.words, exercise.solution);
+    const alternatives = exercise.solutions?.length > 1 ? exercise.solutions.slice(1) : [];
+    const bank = shuffleBank(exercise.words, exercise.solution, (word) => word, alternatives);
     if (!sameMembers(bank, exercise.words)) {
       fail(`${exercise.id} shuffleBank changed the word set`);
       break;
