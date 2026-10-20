@@ -69,6 +69,18 @@ export function parseImport(text) {
   return hydrate(state);
 }
 
+/** Zero a streak that has already been broken, including when the app is only opened. */
+export function refreshStreak(state, today = localISO()) {
+  const last = state.streak?.lastDate;
+  if (!last || last === today || !state.streak.current) return false;
+  const previous = new Date(`${today}T12:00:00`);
+  previous.setDate(previous.getDate() - 1);
+  const yesterday = localISO(previous);
+  if (last === yesterday) return false;
+  state.streak.current = 0;
+  return true;
+}
+
 export function markStudyDay(state) {
   const today = localISO();
   if (state.streak.lastDate === today) return;

@@ -51,9 +51,9 @@ export function shuffleOptions(options) {
  * order (when another order is possible), so the task cannot be solved by
  * tapping the chips from left to right.
  */
-export function shuffleBank(items, solution, wordOf = (item) => item) {
-  const solved = (list) =>
-    solution.length > 0 && solution.every((word, index) => wordOf(list[index]) === word);
+export function shuffleBank(items, solution, wordOf = (item) => item, alternatives = []) {
+  const lists = [solution, ...alternatives].filter((row) => Array.isArray(row) && row.length);
+  const solved = (list) => lists.some((row) => row.every((word, index) => wordOf(list[index]) === word));
   const distinct = new Set(items.map(wordOf)).size > 1;
   let result = shuffle(items);
   let guard = 0;

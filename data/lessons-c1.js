@@ -32,7 +32,7 @@ In a report, thematisation is how paragraphs stay coherent. The theme is often s
       ["å fremheve", "to emphasise", "Setningen fremhever lisenskostnaden.", "The sentence emphasises the licence cost.", "verb"],
       ["det viktigste", "the most important thing", "Det viktigste er at tallene stemmer.", "The most important thing is that the figures add up.", "phrase"],
       ["ikke … men", "not … but", "Ikke driften, men lisensene økte.", "Not operations, but the licences increased.", "phrase"],
-      ["allerede kjent", "already known", "Temaet bør være allerede kjent for leseren.", "The theme should already be known to the reader.", "phrase"],
+      ["allerede kjent", "already known", "Temaet bør allerede være kjent for leseren.", "The theme should already be known to the reader.", "phrase"],
       ["å øke", "to increase", "Kostnaden økte med fire prosent.", "The cost increased by four percent.", "verb"],
     ],
     exercises: [
@@ -54,11 +54,11 @@ In a report, thematisation is how paragraphs stay coherent. The theme is often s
       ),
       order(
         "v2",
-        "Bygg utkløvet.",
+        "Bygg utbrytningen.",
         ["Det", "er", "lisenskostnaden", "som", "øker"],
         "Det er … som isolates lisenskostnaden as the thing that increases.",
         [],
-        "Build the cleft.",
+        "Build the cleft (utbrytning).",
       ),
       fix(
         "v2",
@@ -98,6 +98,13 @@ In a report, thematisation is how paragraphs stay coherent. The theme is often s
         "A fronted object must be followed at once by the finite verb.",
       ),
     ],
+    produce: {
+      prompt: "Skriv to setninger der du løfter fram temaet før verbet.",
+      promptEn: "Write two sentences that put the topic before the verb.",
+      model: "Lisenskostnaden tar vi med i notatet. Driftskostnaden venter vi med.",
+      modelEn: "The licence cost we include in the note. The operating cost we leave for later.",
+      checks: ["Verbet står på plass to.", "Temaet er kjent for leseren.", "Setningene er helsetninger."],
+    },
   }),
   lesson({
     id: "c1-02",
@@ -201,7 +208,7 @@ Other phrases worth owning: på bakgrunn av tallene, i tråd med budsjettet, av 
     husk: "Sin peker på subjektet i sin egen setning. «Per ba Anna … sin» kan være tvetydig.",
     intro: `In a subordinate clause, sin points to the subject of that clause, not automatically to the subject of the sentence. Per sa at Anna hadde sendt rapporten sin. Sin points to Anna. Per sa at Anna hadde sendt rapporten hans. Hans can point to Per, because Per is masculine and is not the subject of the inner clause.
 
-An infinitive has a understood subject. Per lovet å sende rapporten sin. The person who will send it is Per, so sin is Per's report. Per ba Anna sende rapporten sin is not so clear. Anna may be the understood subject of sende, which makes sin Anna's, but readers can also attach sin to Per. In a report, do not leave that ambiguity. Write rapporten hennes or rapporten til Anna if you mean Anna, and sin egen rapport or Pers rapport if you mean Per.
+An infinitive has an understood subject. Per lovet å sende rapporten sin. The person who will send it is Per, so sin is Per's report. Per ba Anna sende rapporten sin is not so clear. Anna may be the understood subject of sende, which makes sin Anna's, but readers can also attach sin to Per. In a report, do not leave that ambiguity. If you mean Anna, write Per ba Anna sende sin egen rapport or Annas rapport. If you mean Per, write Pers rapport. Sin egen follows the person who is asked to act; it does not point back to Per.
 
 Sin still agrees with the noun it stands with, not with the owner: teamet forklarte avviket sitt (neuter), teamet forklarte tallene sine (plural). And jeg, du, vi, dere never take sin. Vi sendte rapporten vår.`,
     examples: [
@@ -229,7 +236,7 @@ Sin still agrees with the noun it stands with, not with the owner: teamet forkla
       ),
       mc(
         "possessives",
-        "Hvem sin rapport er det mest nærliggende å lese i «Per lovet å sende rapporten sin»?",
+        "Hvem eier rapporten i «Per lovet å sende rapporten sin»?",
         ["Pers rapport", "Annas rapport", "en ukjent persons rapport", "rapporten til ledelsen"],
         "Pers rapport",
         "The understood subject of the infinitive is Per, the person who promised. Sin points to him.",
@@ -301,7 +308,7 @@ Ble + participle is an event in the past: Tallene ble avstemt 3. oktober.
 Er + participle is a resulting state: Tallene er avstemt. You are describing how they stand now, not telling the story of the meeting.
 S-passive is a rule or a repeated process: Tallene avstemmes hver måned. Anbefalingen omtales i kapittel 4.
 
-A report that only uses s-passive becomes distant. A report that only uses jeg becomes a diary. Mix them. State the event when the time matters: Gjennomgangen ble gjennomført i september. State the result when the reader needs the current fact: Avviket er forklart. Use s-passive for the standing routine: Kostnadene føres på kostnadssted 410.
+A report that only uses s-passive becomes distant. A report that only uses jeg becomes a diary. Mix them. State the event when the time matters: Vi gjennomgikk tallene i september. State the result when the reader needs the current fact: Avviket er forklart. Use s-passive for the standing routine: Kostnadene føres på kostnadssted 410. «Gjennomgangen ble gjennomført» is the heavy nominalisation this lesson asks you to avoid.
 
 Skyldes is not a passive, but it belongs in the same paragraph. Avviket skyldes høyere lisenspriser. It means "is due to". Do not write "er skyldes".
 
@@ -397,7 +404,7 @@ An open period that includes now takes perfektum. I år har lisenskostnaden økt
 
 A closed period takes preteritum. I fjor økte kostnaden. Fra 2016 til 2019 jobbet jeg med et annet system. The end is stated or understood. I går, i 2019, da jeg tok kurset and forrige uke are closed.
 
-Do not combine a closed time with har. Not "i fjor har kostnaden økt". Do not use preteritum with siden when the situation still holds. Jeg jobber her siden 2016 is a common transfer from English "I work here since". Norwegian uses har jobbet … siden.
+Do not combine a closed time with har. Not "i fjor har kostnaden økt". When the situation still holds, siden takes perfektum: Jeg har jobbet her siden 2016. Jeg jobber her siden 2016 is a typical transfer from Ukrainian, Russian or English, and jobber here is the present, not the preterite. The preterite jeg jobbet her siden 2016 is also wrong while the job continues.
 
 Both tenses can appear in one paragraph because the frames differ. I fjor økte kostnaden med tre prosent. I år har den økt med fire. The reader should be able to see which period is closed.
 
@@ -449,9 +456,10 @@ Ennå and allerede usually go with perfektum when you are looking from now: Vi h
         "tenses",
         "Bygg setningen.",
         ["Vi", "har", "ennå", "ikke", "fått", "bilaget"],
-        "Ennå ikke belongs with perfektum when the gap is still open. Ikke stands after har; ennå can stand before ikke in this frequent pattern.",
+        "Both orders are right. Vi har ennå ikke fått bilaget and Vi har ikke fått bilaget ennå mean the same thing. Ikke stands after har.",
         [],
         "Build: We have not yet received the voucher.",
+        [["Vi", "har", "ikke", "fått", "bilaget", "ennå"]],
       ),
       mc(
         "tenses",
@@ -643,9 +651,10 @@ A good test: if you can say the sentence aloud to your manager without running o
         "register",
         "Bygg setningen.",
         ["Periodiseringen", "føres", "i", "oktober"],
-        "The noun is the subject. Føres is the s-passive of a standing accounting treatment.",
+        "Both orders keep føres in second place. Periodiseringen føres i oktober and I oktober føres periodiseringen are the same claim. The second one themes the month, which c1-01 practises.",
         [],
-        "Build: The accrual is recognised in October.",
+        "Build: The accrual is recognised in October. Time first is also correct.",
+        [["I", "oktober", "føres", "periodiseringen"]],
       ),
       fix(
         "compounds",
@@ -684,7 +693,7 @@ A good test: if you can say the sentence aloud to your manager without running o
 
 A fronted subordinate clause takes one comma at its end, even when the clause is long: Da vi hadde avstemt tallene og forklart avviket, sendte jeg notatet. A fronted at-clause is the same: At tallene stemmer, er godt nytt. Do not put a comma after da or after at alone.
 
-The norm is a comma when a subordinate clause follows the main clause: Vi utsetter møtet, fordi tallene mangler. An at-clause used as the object is the exception and normally has no comma: Jeg ser at tallene stemmer. When two such object clauses are coordinated and at is repeated, put a comma before the second one: Jeg ser at tallene stemmer, og at avviket er lite.
+A subordinate clause that follows the main clause normally has no comma: Vi utsetter møtet fordi tallene mangler. A comma there is only an optional afterthought. An at-clause used as the object has no comma: Jeg ser at tallene stemmer. When two such object clauses are coordinated with og, there is still no comma, even if at is repeated: Jeg ser at tallene stemmer og at avviket er lite.
 
 A non-restrictive insertion has a comma on both sides: Tallene, som kom i går, stemmer. Anna, controlleren vår, sender notatet. Missing the second comma is the usual error.
 
@@ -700,7 +709,7 @@ Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not 
       ["å stå ved lag", "to stand; to remain valid", "Anbefalingen står ved lag.", "The recommendation still stands.", "phrase"],
       ["et innskudd", "an insertion", "Vi setter komma på begge sider av innskuddet.", "We put commas on both sides of the insertion.", "noun"],
       ["restriktiv", "restrictive", "Relativen er restriktiv og trenger ikke komma foran som.", "The relative is restrictive and needs no comma before som.", "adj"],
-      ["controlleren", "the controller", "Anna, controlleren vår, har svart.", "Anna, our controller, has replied.", "noun"],
+      ["en controller", "a controller", "Anna, controlleren vår, har svart.", "Anna, our controller, has replied.", "noun"],
       ["å avstemme", "to reconcile", "Vi hadde avstemt tallene.", "We had reconciled the figures.", "verb"],
       ["et lisensgebyr", "a licence fee", "Lisensgebyret hører til oktober.", "The licence fee belongs to October.", "noun"],
       ["kort", "short", "De to at-setningene er korte.", "The two at-clauses are short.", "adj"],
@@ -715,7 +724,7 @@ Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not 
       ),
       mc(
         "punctuation",
-        "Hvilken setning har komma bare der subjektet med restriktiv relativ avsluttes?",
+        "Hvilken setning har komma bare der subjektet med en restriktiv relativsetning avsluttes?",
         ["Tallene som gjelder lisenser, stemmer.", "Tallene, som gjelder lisenser stemmer.", "Tallene som, gjelder lisenser, stemmer.", "Tallene, som gjelder, lisenser stemmer."],
         "Tallene som gjelder lisenser, stemmer.",
         "No comma before restrictive som. One comma before the main verb, because the subject contains a clause.",
@@ -730,9 +739,9 @@ Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not 
       mc(
         "punctuation",
         "Hvilken setning er riktig om to korte at-setninger?",
-        ["Jeg ser at tallene stemmer, og at avviket er lite.", "Jeg ser, at tallene stemmer, og at avviket er lite.", "Jeg ser at, tallene stemmer og at avviket er lite.", "Jeg ser, at tallene stemmer og at avviket er lite."],
-        "Jeg ser at tallene stemmer, og at avviket er lite.",
-        "No comma before the first at: that clause is the object. The norm is a comma before the second, coordinated at-clause, because at is repeated. A fronted at-clause would take its comma after the clause, not before at.",
+        ["Jeg ser at tallene stemmer og at avviket er lite.", "Jeg ser at tallene stemmer, og at avviket er lite.", "Jeg ser, at tallene stemmer og at avviket er lite.", "Jeg ser at, tallene stemmer og at avviket er lite."],
+        "Jeg ser at tallene stemmer og at avviket er lite.",
+        "No comma before an at-clause used as the object, and no comma between two at-clauses joined by og. The comma before the second at is a common extra mark, not the norm.",
       ),
       order(
         "punctuation",
@@ -874,25 +883,25 @@ These phrases like the first slot and therefore inversion: Etter det jeg kan se,
     titleEn: "bør, får and pleier",
     concepts: ["modals"],
     maal: "Du skiller råd, tillatelse, vane og forsiktig avstand.",
-    husk: "Du bør vente. Du får sende den i morgen. Jeg pleier å sende den på fredag.",
-    intro: `Bør gives a recommendation. Du bør vente til tallene er avstemt. It is stronger than a wish and weaker than må. Burde is softer, or it is counterfactual with ha: Du burde ha ventet. In a report, jeg anbefaler at is often clearer than a bare bør, but bør is excellent inside that clause: Jeg anbefaler at vi bør vente is too heavy. Write Jeg anbefaler at vi venter, or Vi bør vente.
+    husk: "Du bør vente. Du får lov til å sende den i morgen. Jeg pleier å sende den på fredager.",
+    intro: `Bør gives a recommendation. Du bør vente til tallene er avstemt. It is stronger than a wish and weaker than må. Burde is softer, or it is counterfactual with ha: Du burde ha ventet. In a report, jeg anbefaler at is often clearer than a bare bør. Do not put bør inside that clause: Jeg anbefaler at vi bør vente is too heavy. Write Jeg anbefaler at vi venter, or Vi bør vente.
 
-Får plus infinitive can mean permission: Du får sende den i morgen. It can also mean "manage to" or "get to". Context decides. It is not the same as må. Får is not followed by å in this pattern: du får sende, not "du får å sende".
+Får plus a bare infinitive has two readings, and the obligation reading is the common one. Du får sende den i morgen often means "you have to / it's your job to send it", not "you may". It can also mean "you get to" or "you manage to". For clear permission, write Du får lov til å sende den i morgen. Får is not followed by å: du får sende, not "du får å sende". Får lov til takes å.
 
-Pleier is not a modal of the kan/må type. It takes å: Jeg pleier å sende rapporten på fredag. The past is pleide å. Use it for a real habit, not for a rule you are introducing. A rule is sendes or skal.
+Pleier is not a modal of the kan/må type. It takes å: Jeg pleier å sende rapporten på fredager. The plural fredager is the habit. På fredag would be one particular Friday. The past is pleide å. Use pleier for a real habit, not for a rule you are introducing. A rule is sendes or skal.
 
 Skal can mean a plan, an obligation, or a report of what you have heard. Hun skal være syk means "she is said to be ill", not that she ought to be ill. In a status report, avoid that hearsay skal unless you mark the source. Write Etter det teamet melder, er hun syk.
 
 Trenger ikke means "need not", and there is no obligation. Du trenger ikke å sende den i dag. Å is often kept, and trenger ikke sende without å also occurs. These exercises accept both.`,
     examples: [
       { no: "Vi bør vente til tallene er avstemt.", en: "We should wait until the figures are reconciled." },
-      { no: "Du får sende notatet i morgen.", en: "You may send the note tomorrow." },
-      { no: "Jeg pleier å sende rapporten på fredag.", en: "I usually send the report on Friday." },
+      { no: "Du får lov til å sende notatet i morgen.", en: "You are allowed to send the note tomorrow." },
+      { no: "Jeg pleier å sende rapporten på fredager.", en: "I usually send the report on Fridays." },
     ],
     vocab: [
       ["bør", "should; ought to", "Du bør sjekke bilaget.", "You should check the voucher.", "verb"],
       ["å pleie å", "to usually do", "Jeg pleier å kontrollere tallene to ganger.", "I usually check the figures twice.", "verb"],
-      ["får", "may; get to", "Du får bruke mitt utkast.", "You may use my draft.", "verb"],
+      ["får lov til å", "to be allowed to", "Du får lov til å bruke mitt utkast.", "You are allowed to use my draft.", "verb"],
       ["trenger ikke", "need not", "Du trenger ikke å svare i kveld.", "You do not need to reply tonight.", "verb"],
       ["etter det teamet melder", "according to what the team reports", "Etter det teamet melder, er filen klar.", "According to the team, the file is ready.", "phrase"],
       ["en anbefaling", "a recommendation", "Anbefalingen er å vente.", "The recommendation is to wait.", "noun"],
@@ -909,7 +918,7 @@ Trenger ikke means "need not", and there is no obligation. Du trenger ikke å se
       fill(
         "modals",
         "Fyll inn. Vanen tar å.",
-        "Jeg pleier ___ sende rapporten på fredag.",
+        "Jeg pleier ___ sende rapporten på fredager.",
         ["å"],
         "Pleier takes å before the infinitive. Modal verbs like må and bør do not.",
       ),
@@ -925,8 +934,8 @@ Trenger ikke means "need not", and there is no obligation. Du trenger ikke å se
         "modals",
         "Skriv setningen riktig.",
         "Du får å sende notatet i morgen.",
-        ["Du får sende notatet i morgen"],
-        "Får in this sense takes a bare infinitive, like må and kan.",
+        ["Du får sende notatet i morgen", "Du får lov til å sende notatet i morgen"],
+        "Får takes a bare infinitive: du får sende, not du får å sende. That sentence is often read as an instruction, «you are to send it». If you mean permission, Du får lov til å sende notatet i morgen is the clear form. Both are accepted here.",
       ),
       order(
         "modals",
@@ -959,6 +968,13 @@ Trenger ikke means "need not", and there is no obligation. Du trenger ikke å se
         "Pleier å is the habitual. The others are advice, permission or a plan.",
       ),
     ],
+    produce: {
+      prompt: "Skriv en kort anbefaling med bør, og en setning om hva mottakeren får lov til.",
+      promptEn: "Write a short recommendation with bør, and one sentence about what the reader is allowed to do.",
+      model: "Jeg anbefaler at vi venter. Du får lov til å sende notatet på fredag.",
+      modelEn: "I recommend that we wait. You may send the note on Friday.",
+      checks: ["bør står ikke inni at-setningen.", "Tillatelse er formulert med får lov til å.", "Det er ingen komma foran at."],
+    },
   }),
   lesson({
     id: "c1-11",
@@ -1105,9 +1121,9 @@ When a sentence fails, it is usually because two rules have been applied to the 
       fill(
         "adverb-sub",
         "Fyll inn ikke i leddsetningen.",
-        "Vi tar den med, fordi den ___ er høy.",
+        "Vi utelater den fordi den ___ er høy.",
         ["ikke"],
-        "Fordi starts a subordinate clause. Ikke stands before er. The main clause keeps ikke after the finite verb if you negate that clause instead.",
+        "Leaving the risk out because it is not high is a coherent reason. Fordi starts a subordinate clause, so ikke stands before er. The normal comma rule puts no comma before fordi here.",
       ),
       mc(
         "conjunctions",
@@ -1135,8 +1151,8 @@ When a sentence fails, it is usually because two rules have been applied to the 
         "adverb-sub",
         "Skriv setningen riktig.",
         "Vi utelater risikoen fordi er den ikke høy.",
-        ["Vi utelater risikoen, fordi den ikke er høy"],
-        "No inversion in the fordi-clause, and ikke stands before the verb. A fordi-clause that follows the main clause normally takes a comma.",
+        ["Vi utelater risikoen fordi den ikke er høy", "Vi utelater risikoen, fordi den ikke er høy"],
+        "No inversion in the fordi-clause, and ikke stands before the verb. The normal form has no comma before fordi. A comma is only an optional afterthought, so both wordings are accepted.",
       ),
       mc(
         "v2",
@@ -1150,8 +1166,8 @@ When a sentence fails, it is usually because two rules have been applied to the 
         "v2",
         "Slå sammen til én setning. Start med «Denne risikoen».",
         "Vi tar ikke med denne risikoen. Den er lav.",
-        ["Denne risikoen tar vi ikke med, fordi den er lav"],
-        "Front the object, keep ikke after vi, and attach the reason as a fordi-clause. No inversion inside fordi.",
+        ["Denne risikoen tar vi ikke med fordi den er lav", "Denne risikoen tar vi ikke med, fordi den er lav"],
+        "Front the object, keep ikke after vi, and attach the reason as a fordi-clause. No inversion inside fordi. The version without a comma is the normal one; the comma is an optional afterthought.",
         "Combine them into one sentence. Start with Denne risikoen.",
       ),
     ],

@@ -1,5 +1,6 @@
 /** Helpers for lesson files. See README (Legge til en leksjon). */
 
+import { decoysFor } from "./decoys.js";
 import { gapChoices } from "./gap-choices.js";
 
 function unique(list) {
@@ -64,26 +65,31 @@ export function closeExercise(exercise) {
     };
   }
   if (exercise.type === "fix" || exercise.type === "rewrite") {
-    const answer = exercise.answers[0].trim();
-    const blocked = new Set(exercise.answers.map((item) => item.trim()));
+    const accepted = unique(exercise.answers);
+    const answer = accepted[0];
+    const blocked = new Set(accepted);
     const rawSource = String(exercise.wrong || exercise.source || "").trim();
     const source = rawSource && !/[.!?…]$/.test(answer) ? bodyOf(rawSource) : rawSource;
     const wrongs = [];
-    if (source && !blocked.has(source) && source !== answer) wrongs.push(source);
-    const options = unique([answer, ...wrongs]);
-    if (options.length < 2 || !options.includes(answer)) {
+    if (source && !blocked.has(source)) wrongs.push(source);
+    const decoys = unique([...(exercise.decoys || []), ...decoysFor(exercise.id)]).filter(
+      (item) => !blocked.has(item) && item !== source,
+    );
+    const options = unique([...accepted, ...wrongs, ...decoys]);
+    if (options.length < 2 || !accepted.every((item) => options.includes(item))) {
       throw new Error(`Could not build choices for ${exercise.id}`);
     }
     const rest = { ...exercise };
     delete rest.wrong;
     delete rest.source;
+    delete rest.decoys;
     return {
       ...rest,
       type: "mc",
       prompt: soften(exercise.prompt),
       options,
       answer,
-      answers: [answer],
+      answers: accepted,
     };
   }
   throw new Error(`Unknown exercise type ${exercise.type} on ${exercise.id}`);
@@ -110,14 +116,27 @@ export function fill(concept, prompt, text, answers, explanation, promptEn = "")
   };
 }
 
-export function order(concept, prompt, solution, explanation, extras = [], promptEn = "") {
+export function order(concept, prompt, solution, explanation, extras = [], promptEn = "", solutions = []) {
+  const accepted = [solution, ...solutions].filter((row) => Array.isArray(row) && row.length);
+  const counts = new Map();
+  for (const row of accepted) {
+    const seen = new Map();
+    for (const token of row) seen.set(token, (seen.get(token) || 0) + 1);
+    for (const [token, count] of seen) counts.set(token, Math.max(counts.get(token) || 0, count));
+  }
+  for (const token of extras) counts.set(token, (counts.get(token) || 0) + 1);
+  const words = [];
+  for (const [token, count] of counts) {
+    for (let index = 0; index < count; index += 1) words.push(token);
+  }
   return {
     type: "order",
     concept,
     prompt,
     promptEn,
-    words: [...solution, ...extras],
+    words,
     solution,
+    solutions: accepted,
     explanation,
   };
 }
@@ -157,6 +176,7 @@ export function lesson(spec) {
     example: row[2],
     exampleEn: row[3],
     pos: row[4] || "",
+    forms: row[5] || "",
     level: spec.level,
     track,
     theme: track === "jobb" ? "jobb" : "kurs",

@@ -1,6 +1,6 @@
 # Norsk hver dag
 
-Statisk øvelsesbok i bokmål, fra A1 til C1, med et eget jobbkurs og lesetekster med opplesning. Forklaringene er på engelsk. Selve øvelsene, eksemplene og grensesnittet er på norsk. Ingenting hentes fra et nettsted mens du øver. Alt ligger i filene.
+Statisk øvelsesbok i bokmål, fra A1 til C1, med et eget jobbkurs og lesetekster med opplesning. Forklaringene er på engelsk. Selve øvelsene, eksemplene og grensesnittet er på norsk. Filer og lyd hentes fra nettstedet når du åpner appen. Det er ingen egen frakoblet lagring, så første besøk trenger nett.
 
 Appen er laget for daglig øving på 10–15 minutter: en som har tatt norskkurs, men som jobber på engelsk og trenger både grammatikk og et ryddig, formelt skriftspråk.
 
@@ -9,12 +9,13 @@ Appen er laget for daglig øving på 10–15 minutter: en som har tatt norskkurs
 1. Åpne appen og logg inn. Passordet er `Tsvitana`. Huk av «Husk meg på denne enheten» på telefonen, så slipper du å skrive det hver dag. Det er en enkel lås på siden, ikke en konto.
 2. Første gang får du en nivåtest på omtrent 15–20 minutter, eller du velger nivå selv.
 3. **I dag** foreslår én leksjon. Valget legger vekt på nivået ditt og emnene du kan minst.
-4. Les den korte forklaringen, gå gjennom ordene, og svar på øvelsene. Du får fasit med én gang. Oppgavene er flervalg eller ord du trykker sammen. Du skal ikke skrive hele setninger selv.
+4. Les den korte forklaringen, gå gjennom ordene, og svar på øvelsene. Du får fasit med én gang. De rettede oppgavene er flervalg eller ord du trykker sammen. Noen leksjoner har en frivillig egen produksjon til slutt. Den rettes ikke automatisk: du ser et modellsvar og krysser av selv.
 5. **Repetisjon** blander omtrent 70 % fra svake emner med 30 % repetisjon. Ord og oppgaver du bommer på, kommer tilbake senere.
-6. **Jobbnorsk** er én leksjon i uka: e-post, status, referat, tall og høflig uenighet.
-7. **Lesing**, under Mer, har tekster med ferdig innspilt opplesning. Spill av hele teksten, eller én setning om gangen. ● tar opp stemmen din i nettleseren (ingenting lastes opp) og spiller originalen og opptaket etter hverandre. **Til diktat** lar deg høre en setning og skrive den. Store bokstaver og tegn teller ikke. Deretter kommer noen spørsmål om teksten.
-8. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne. Trykk på et emne for å øve på det.
-9. **Ordbank** har en avspillingsknapp per oppslag. «ei uke» og «en uke» står som «ei/en uke».
+6. **Jobbnorsk** har leksjoner om e-post, status, referat, tall, Teams, telefon, månedsavslutning, revisjon og lunsjprat.
+7. **Lesing** har tekster med ferdig innspilt opplesning, gruppert etter nivå. De lengste C1-tekstene er på over 300 ord. Noen jobbdialoger leses med to stemmer. Spill av hele teksten, eller én setning om gangen. ● tar opp stemmen din i nettleseren (ingenting lastes opp). Opptaket stopper når du forlater siden, og etter 45 sekunder. Du trykker selv på ⇄ etterpå. **Til diktat** lar deg høre en setning og skrive den. Store bokstaver og tegn teller ikke, og klokkeslett og dato kan skrives med siffer eller ord. Deretter kommer noen spørsmål om teksten. **Vis hjelp** viser engelske setninger og ordliste der teksten har det.
+8. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne. Mestring vises først etter flere svar. Trykk på et emne for å øve på det.
+9. **Ordbank** har en avspillingsknapp per oppslag og på eksempelet. Du kan filtrere på nivå. «ei uke» og «en uke» står som «ei/en uke».
+10. **Uttale** har minimale par. Tonelag er med som kontrast, men den syntetiske stemmen skiller ikke tonelag pålitelig.
 
 Fremgangen lagres i nettleseren (`localStorage`). Den følger ikke med til en annen telefon av seg selv.
 
@@ -29,7 +30,7 @@ Ta vare på filen hvis du bytter nettleser eller telefon.
 
 ### Nivå
 
-Du kan ta testen på nytt, eller sette nivå manuelt. C2 kan komme ut av testen. Kurset har leksjoner til og med C1. På C2 prioriterer repetisjonen de vanskeligste emnene, og jobbleksjonene holder skriftspråket i gang.
+Du kan ta testen på nytt, eller sette nivå manuelt. De vanskelige spørsmålene teller mer, og emnet vises ikke over spørsmålet. C2 kommer bare ut av testen når også C1-spørsmålene i praksis er riktige. Kurset har leksjoner til og med C1. På C2 prioriterer repetisjonen de vanskeligste emnene, og jobbleksjonene holder skriftspråket i gang.
 
 ## Kom i gang
 
@@ -62,7 +63,9 @@ Leksjonene ligger i `data/`, én fil per nivå:
 | `data/lessons-b1.js` | B1 |
 | `data/lessons-b2.js` | B2 |
 | `data/lessons-c1.js` | C1 |
+| `data/lessons-c1-extra.js` | C1, presisjon: partikler, preposisjoner, indirekte tale |
 | `data/lessons-jobb.js` | Jobbnorsk |
+| `data/lessons-jobb-extra.js` | Jobbnorsk: Teams, telefon, tall, avslutning, revisjon, lunsj |
 
 Hjelpefunksjonene `lesson`, `mc`, `fill`, `order`, `fix` og `rewrite` ligger i `data/build.js`. `fill`, `fix` og `rewrite` blir til flervalg når leksjonen bygges, slik at flere riktige formuleringer ikke blir markert feil. En leksjon ser slik ut:
 
@@ -109,11 +112,12 @@ Krav som valideringen håndhever:
 I kildefilene kan du fortsatt skrive `fill`, `fix` og `rewrite`. De blir lukket automatisk:
 
 - `fill` blir flervalg for ordet som mangler. Legg alternativene i `data/gap-choices.js` med samme id som øvelsen, for eksempel `b2-01-e2`. Ikke legg en annen godkjent form inn som feil svar.
-- `fix` og `rewrite` blir flervalg mellom den første godkjente setningen og utgangspunktet.
+- `fix` og `rewrite` blir flervalg. Alle godkjente formuleringer blir alternativer, og alle godtas. Utgangspunktet blir med hvis det er en annen setning.
+- `order` kan ha flere godkjente rekkefølger. Ordbeholdningen er unionen, så både «I» og «i» kan ligge der når begge er riktige.
 
-Lesetekster ligger i `data/readings.js` og `data/readings-more.js`. Hver tekst har en mp3 i `audio/` med samme navn som id-en, pluss én fil per setning i `audio/setninger/`. Opplesningen er neural bokmål fra `edge-tts`: `nb-NO-PernilleNeural` og `nb-NO-FinnNeural`, tempo `-8%`. Ordbanken har en kort mp3 per oppslag i `audio/ord/`. Filene ligger i repositoriet, så de virker uten nett. Nye filer kan lages med `node scripts/build-audio.mjs` hvis `edge-tts` er installert. Avspilleren har ikke hastighetskontroll.
+Lesetekster ligger i `data/readings.js`, `data/readings-more.js` og `data/readings-long.js`. Hver tekst har en mp3 i `audio/` med samme navn som id-en, pluss én fil per setning i `audio/setninger/`. Dialoger med to stemmer settes sammen av setningsfilene. Opplesningen er neural bokmål fra `edge-tts`: `nb-NO-PernilleNeural` og `nb-NO-FinnNeural`, tempo `-8%`. Ordbanken har en kort mp3 per oppslag i `audio/ord/`. Eksempelsetninger ligger i `audio/klipp/`, og uttaleparene i `audio/uttale/`. Nye filer kan lages med `node scripts/build-audio.mjs` hvis `edge-tts` er installert. Avspilleren har ikke hastighetskontroll og markerer ikke ordet som leses.
 
-Komma i leksjonene følger bokmålsnormalen: komma etter en innledende leddsetning, komma når leddsetningen kommer etter helsetningen, og ikke komma foran en at-setning som er objekt.
+Komma i leksjonene følger bokmålsnormalen: komma etter en innledende leddsetning, ikke komma når leddsetningen kommer etter helsetningen, ikke komma foran en at-setning som er objekt, og ikke komma mellom to at-setninger som er bundet med og.
 
 Ekstra ord som ikke hører til én leksjon, legges i `data/vocab-bank.js`.
 

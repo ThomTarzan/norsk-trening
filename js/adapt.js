@@ -184,8 +184,37 @@ export function suggestLevel(correct, total) {
   if (ratio < 0.41) return "A2";
   if (ratio < 0.56) return "B1";
   if (ratio < 0.76) return "B2";
-  if (ratio < 0.91) return "C1";
+  if (ratio < 0.97) return "C1";
   return "C2";
+}
+
+/**
+ * Weighted placement. Easy items cannot carry the result to C1, and C2
+ * requires the C1 items as well as a very high overall score.
+ */
+export function suggestLevelFromAnswers(answers, items) {
+  let earned = 0;
+  let possible = 0;
+  let hardEarned = 0;
+  let hardPossible = 0;
+  for (let index = 0; index < items.length; index += 1) {
+    const weight = items[index].weight || 1;
+    possible += weight;
+    const hard = items[index].band === "C1" || weight >= 3;
+    if (hard) hardPossible += weight;
+    if (answers[index]?.ok) {
+      earned += weight;
+      if (hard) hardEarned += weight;
+    }
+  }
+  const ratio = possible ? earned / possible : 0;
+  const hardRatio = hardPossible ? hardEarned / hardPossible : 0;
+  if (hardPossible >= 9 && ratio >= 0.94 && hardRatio >= 0.99) return "C2";
+  if (ratio >= 0.78 && hardRatio >= 0.67) return "C1";
+  if (ratio >= 0.6) return "B2";
+  if (ratio >= 0.45) return "B1";
+  if (ratio >= 0.3) return "A2";
+  return "A1";
 }
 
 export function dueCount(state) {

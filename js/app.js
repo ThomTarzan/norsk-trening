@@ -11,7 +11,7 @@ import {
   readings,
   vocabMap,
 } from "../data/catalog.js";
-import { buildReview, conceptMastery, dueCount, jobSuggestion, recommendLesson, suggestLevel } from "./adapt.js";
+import { buildReview, conceptMastery, dueCount, jobSuggestion, recommendLesson, suggestLevelFromAnswers } from "./adapt.js";
 import { checkExercise, gradeDictation } from "./check.js";
 import { emptyCard, schedule } from "./srs.js";
 import {
@@ -21,10 +21,13 @@ import {
   markStudyDay,
   parseImport,
   recordConcept,
+  refreshStreak,
   saveState,
 } from "./storage.js";
 import { esc, formatWhen, greeting, localISO, paragraphs, shuffle, shuffleBank, shuffleOptions } from "./util.js";
 import { sentencesOf } from "../data/readings.js";
+import { clipAudio } from "../data/clip-audio.js";
+import { pronunciation, pronunciationItems } from "../data/pronunciation.js";
 import { vocabAudio } from "../data/vocab-audio.js";
 import { groupVocab } from "./vocab-groups.js";
 
@@ -35,6 +38,7 @@ const lessonsById = lessonMap();
 const readingsById = readingMap();
 const wordsById = vocabMap();
 let state = loadState();
+if (refreshStreak(state)) saveState(state);
 let mem = blankMem();
 let focusMode = "route";
 let loginNote = "";
@@ -58,6 +62,9 @@ function blankMem() {
     takes: {},
     recordingKey: "",
     micNote: "",
+    level: "alle",
+    showHelp: false,
+    produceChecks: {},
   };
 }
 
@@ -93,7 +100,7 @@ function lessonFromCursor(id) {
   const record = state.lessons[id];
   const cursor = record?.cursor;
   if (!cursor || record?.completed) return null;
-  const phase = ["intro", "words", "quiz"].includes(cursor.phase) ? cursor.phase : "intro";
+  const phase = ["intro", "words", "quiz", "produce"].includes(cursor.phase) ? cursor.phase : "intro";
   return {
     kind: "lesson",
     lessonId: id,
@@ -145,6 +152,37 @@ function ensureProfile(level) {
 function conceptLabel(id) {
   return conceptById[id]?.name || id;
 }
+
+function tally(count, one, many) {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+function coarsePointer() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+function wordClass(word) {
+  if (word.pos) return word.pos;
+  const head = String(word.no || "").toLowerCase();
+  const article = head.match(/^(en|ei|et|å)\b/);
+  return article ? article[1] : "other";
+}
+
+const THEME_LABEL = {
+  kurs: "grammatikk",
+  kobling: "bindeord",
+  hverdag: "hverdag",
+  arbeid: "arbeid",
+  økonomi: "økonomi",
+  luftfart: "luftfart",
+  jobb: "jobb",
+};
+
+function themeLabel(theme) {
+  return THEME_LABEL[theme] || theme;
+}
+
+const MIN_MASTERY_ATTEMPTS = 4;
 
 function lessonRecord(id) {
   return state.lessons[id];
@@ -213,8 +251,13 @@ function startReview() {
     if (item.kind !== "vocab") continue;
     const word = wordsById.get(item.vocabId);
     if (!word) continue;
-    const wrong = shuffle(allVocab().filter((other) => other.en !== word.en)).slice(0, 3);
-    optionsByKey[item.key] = shuffle([word.en, ...wrong.map((other) => other.en)]);
+    const direction = Math.random() < 0.5 ? "en-no" : "no-en";
+    item.direction = direction;
+    const sameClass = allVocab().filter((other) => other.id !== word.id && wordClass(other) === wordClass(word));
+    const pool = sameClass.length >= 3 ? sameClass : allVocab().filter((other) => other.id !== word.id);
+    const wrong = shuffle(pool).slice(0, 3);
+    const field = direction === "en-no" ? "no" : "en";
+    optionsByKey[item.key] = shuffle([word[field], ...wrong.map((other) => other[field])]);
   }
   state.session = {
     kind: "review",
@@ -282,14 +325,26 @@ function submitCurrent() {
       render();
       return;
     }
-    const ok = mem.choice === task.vocab.en;
+    const direction = task.item?.direction || "no-en";
+    const expectedChoice = direction === "en-no" ? task.vocab.no : task.vocab.en;
+    const ok = mem.choice === expectedChoice;
     const card = state.srs[task.vocab.id] || emptyCard("vocab", "");
     state.srs[task.vocab.id] = schedule(card, ok ? 5 : 0);
     if (card.concept && conceptById[card.concept]) recordConcept(state, card.concept, ok);
-    state.session.answers.push({ ok, concept: card.concept || "", id: task.vocab.id, bucket: task.bucket });
+    state.session.answers.push({
+      ok,
+      concept: card.concept || "",
+      id: task.vocab.id,
+      bucket: task.bucket,
+      given: mem.choice,
+      prompt: direction === "en-no" ? task.vocab.en : task.vocab.no,
+      expected: `${task.vocab.no} — ${task.vocab.en}`,
+      explanation: task.vocab.exampleEn,
+    });
     mem.locked = true;
     mem.feedback = {
       ok,
+      given: mem.choice,
       expected: `${task.vocab.no} — ${task.vocab.en}`,
       explanation: task.vocab.exampleEn,
     };
@@ -332,18 +387,21 @@ function submitCurrent() {
       state.srs[cardId] = schedule(state.srs[cardId] || emptyCard("exercise", exercise.concept), result.ok ? 5 : 0);
     }
   }
+  const given = exercise.type === "order" ? input.join(" ") : String(input ?? "");
   state.session.answers.push({
     id: exercise.id,
     ok: result.ok,
     concept: exercise.concept,
     bucket: task.bucket || null,
     expected: result.expected,
+    given,
     explanation: exercise.explanation,
     prompt: exercise.prompt,
   });
   mem.locked = true;
   mem.feedback = {
     ok: result.ok,
+    given,
     expected: result.expected,
     explanation: exercise.explanation,
     hidden: state.session.kind === "placement",
@@ -365,6 +423,16 @@ function nextStep() {
           ? readingsById.get(session.readingId).questions.length
           : session.plan.length;
   resetAnswer();
+  if (session.kind === "lesson" && session.index + 1 >= taskCount) {
+    const lesson = lessonsById.get(session.lessonId);
+    if (lesson?.produce && session.phase === "quiz") {
+      session.phase = "produce";
+      focusMode = "route";
+      save();
+      render();
+      return;
+    }
+  }
   if (session.index + 1 < taskCount) {
     session.index += 1;
     focusMode = "route";
@@ -390,7 +458,12 @@ function finishSession() {
   session.phase = "done";
   if (session.kind === "placement") {
     for (const answer of session.answers) recordConcept(state, answer.concept, answer.ok);
-    session.result = { correct, total, score, suggested: suggestLevel(correct, total) };
+    session.result = {
+      correct,
+      total,
+      score,
+      suggested: suggestLevelFromAnswers(session.answers, placement.items),
+    };
   } else if (session.kind === "lesson") {
     const previous = state.lessons[session.lessonId] || {};
     state.lessons[session.lessonId] = {
@@ -437,6 +510,41 @@ function confirmLevel(level, source) {
   go("#/");
 }
 
+function isNorwegianParagraph(text) {
+  if (/[æøåÆØÅ]/.test(text)) return true;
+  const lower = ` ${text.toLowerCase()} `;
+  const english = [" the ", " and ", " is ", " are ", " of ", " with ", " that ", " this ", " you ", " not "].filter((word) =>
+    lower.includes(word),
+  ).length;
+  const norwegian = [" jeg ", " ikke ", " fordi ", " når ", " hvis ", " som ", " en ", " et "].filter((word) =>
+    lower.includes(word),
+  ).length;
+  return norwegian > english && text.length > 24;
+}
+
+function inlineNorwegian(text) {
+  return esc(text).replace(/«([^»]+)»/g, "«<span lang=\"nb\" class=\"nb-inline\">$1</span>»");
+}
+
+function englishHtml(source) {
+  return paragraphs(source)
+    .map((paragraph) =>
+      isNorwegianParagraph(paragraph)
+        ? `<p lang="nb" class="nb-sample">${esc(paragraph)}</p>`
+        : `<p>${inlineNorwegian(paragraph)}</p>`,
+    )
+    .join("");
+}
+
+function clipFor(text) {
+  return clipAudio[String(text || "").replace(/\s+/g, " ").trim()] || "";
+}
+
+function playButton(src, label) {
+  if (!src) return "";
+  return `<button class="icon-btn" type="button" data-action="play-src" data-src="${esc(src)}" aria-label="${esc(label)}">▶</button>`;
+}
+
 function sentenceHtml(text) {
   return esc(text).replaceAll("___", '<span class="gap" aria-hidden="true">____</span>');
 }
@@ -444,7 +552,12 @@ function sentenceHtml(text) {
 function ensureChips(exercise) {
   if (mem.chips?.id === exercise.id) return mem.chips;
   const keyed = exercise.words.map((word, index) => ({ word, key: `${exercise.id}-${index}` }));
-  mem.chips = { id: exercise.id, bank: shuffleBank(keyed, exercise.solution, (chip) => chip.word), chosen: [] };
+  const alternatives = exercise.solutions?.length > 1 ? exercise.solutions.slice(1) : [];
+  mem.chips = {
+    id: exercise.id,
+    bank: shuffleBank(keyed, exercise.solution, (chip) => chip.word, alternatives),
+    chosen: [],
+  };
   return mem.chips;
 }
 
@@ -456,11 +569,12 @@ function ensureOptions(exercise) {
   return mem.options.list;
 }
 
-function exerciseBlock(exercise, progressLabel) {
+function exerciseBlock(exercise, progressLabel, { showConcept = true } = {}) {
   const chips = exercise.type === "order" && !mem.feedback ? ensureChips(exercise) : mem.chips;
   const options = exercise.type === "mc" ? ensureOptions(exercise) : [];
+  const concept = showConcept ? ` · ${esc(conceptLabel(exercise.concept))}` : "";
   return `
-    <p class="kicker">${esc(progressLabel)} · ${esc(conceptLabel(exercise.concept))}</p>
+    <p class="kicker">${esc(progressLabel)}${concept}</p>
     <div class="progress" aria-hidden="true"><span style="width:${progressWidth()}%"></span></div>
     <h1>${esc(exercise.prompt)}</h1>
     ${exercise.promptEn ? `<p class="en" lang="en"><span class="en-label">EN</span> ${esc(exercise.promptEn)}</p>` : ""}
@@ -497,7 +611,7 @@ function interactionHtml(exercise, options, chips) {
         )
         .join("")}
     </div>
-    <p class="fine">Tast 1–4 velger. Enter sjekker.</p>
+    ${coarsePointer() || options.length < 3 ? "" : `<p class="fine">Tast 1–${options.length} velger. Enter sjekker.</p>`}
     <button class="btn" type="button" data-action="submit">Sjekk svar</button>`;
   }
   if (exercise.type === "order") {
@@ -518,12 +632,16 @@ function interactionHtml(exercise, options, chips) {
 }
 
 function vocabBlock(word, progressLabel) {
-  const options = state.session.optionsByKey[state.session.plan[state.session.index].key] || [word.en];
+  const item = state.session.plan[state.session.index];
+  const direction = item?.direction || "no-en";
+  const options = state.session.optionsByKey[item.key] || [direction === "en-no" ? word.no : word.en];
+  const prompt = direction === "en-no" ? word.en : word.no;
+  const gloss = direction === "en-no" ? "Velg det norske ordet." : "Velg betydningen.";
   return `
     <p class="kicker">${esc(progressLabel)} · ord</p>
-    <h1>${esc(word.no)}</h1>
+    <h1 lang="${direction === "en-no" ? "en" : "nb"}">${esc(prompt)}</h1>
     <p>${esc(word.example)}</p>
-    <p class="en" lang="en"><span class="en-label">EN</span> Choose the meaning.</p>
+    <p class="en" lang="en"><span class="en-label">EN</span> ${gloss}</p>
     ${mem.note ? `<p class="note" role="alert">${esc(mem.note)}</p>` : ""}
     ${
       mem.feedback
@@ -544,6 +662,7 @@ function feedbackHtml(feedback) {
   }
   return `<div class="feedback ${feedback.ok ? "ok" : "bad"}" id="feedback" tabindex="-1">
       <p><strong>${feedback.ok ? "Riktig." : "Ikke helt."}</strong></p>
+      ${feedback.ok || !feedback.given ? "" : `<p>Du valgte: ${esc(feedback.given)}</p>`}
       ${feedback.ok ? "" : `<p>Riktig svar: ${esc(feedback.expected)}</p>`}
       <p class="en" lang="en">${esc(feedback.explanation)}</p>
     </div>
@@ -563,11 +682,17 @@ function renderHome() {
       <p class="en" lang="en"><span class="en-label">EN</span> Explanations are in English. The exercises are Norwegian bokmål, and nothing is generated on the fly.</p>
     </section>
     <div class="stats">
-      <div class="stat"><b>${state.streak.current}</b><span>dager på rad</span></div>
+      <div class="stat"><b>${state.streak.current}</b><span>${state.streak.current === 1 ? "dag på rad" : "dager på rad"}</span></div>
       <div class="stat"><b>${esc(state.profile?.level || "–")}</b><span>nivå</span></div>
-      <div class="stat"><b>${completedCount()}</b><span>leksjoner</span></div>
+      <div class="stat"><b>${completedCount()}</b><span>${completedCount() === 1 ? "leksjon" : "leksjoner"}</span></div>
     </div>
     ${resume ? resumeCard(resume) : ""}
+    <article class="card">
+      <p class="kicker">Dagens økt</p>
+      <h2>Leksjon, repetisjon og én tekst</h2>
+      <p>Omtrent 25 minutter. Du kan hoppe av etter hvert steg.</p>
+      <button class="btn" type="button" data-action="start-day">Start dagens økt</button>
+    </article>
     ${recommended ? lessonTeaser(recommended, "Dagens leksjon") : ""}
     <article class="card">
       <p class="kicker">Repetisjon</p>
@@ -593,7 +718,7 @@ function renderWelcome() {
     </section>
     <article class="card">
       <h2>Nivåtest</h2>
-      <p>Omtrent ${placement.minutes} minutter. 20 spørsmål om ordstilling, tid, passiv, sin/hans og formelt språk. Du kan ta den om igjen, eller velge nivå selv.</p>
+      <p>Omtrent ${placement.minutes} minutter. ${placement.items.length} spørsmål. De vanskelige teller mer. Du kan ta den om igjen, eller velge nivå selv.</p>
       <label>Navn i appen
         <input type="text" data-setting="name" value="${esc(state.settings.name || "")}" />
       </label>
@@ -759,12 +884,15 @@ function nextDict() {
 function weakList() {
   const ranked = concepts
     .map((concept) => ({ concept, mastery: conceptMastery(state, concept.id), attempts: state.concepts[concept.id]?.attempts || 0 }))
-    .filter((item) => item.attempts > 0)
+    .filter((item) => item.attempts >= MIN_MASTERY_ATTEMPTS)
     .sort((a, b) => a.mastery - b.mastery)
     .slice(0, 3);
-  if (!ranked.length) return `<p class="fine">Når du har svart på noen oppgaver, vises de svakeste emnene her.</p>`;
+  if (!ranked.length) return `<p class="fine">Når du har svart noen ganger på et emne, vises de svakeste her.</p>`;
   return `<h2>Svakest nå</h2><div class="row">${ranked
-    .map((item) => `<span class="pill">${esc(item.concept.name)} ${item.mastery} %</span>`)
+    .map(
+      (item) =>
+        `<button class="pill" type="button" data-action="practice-concept" data-concept="${esc(item.concept.id)}">${esc(item.concept.name)} ${item.mastery} %</button>`,
+    )
     .join("")}</div>`;
 }
 
@@ -817,9 +945,9 @@ function renderDash() {
   return `
     <h1>Fremgang</h1>
     <div class="stats">
-      <div class="stat"><b>${state.streak.current}</b><span>dager nå</span></div>
+      <div class="stat"><b>${state.streak.current}</b><span>${state.streak.current === 1 ? "dag nå" : "dager nå"}</span></div>
       <div class="stat"><b>${state.streak.best}</b><span>beste rekke</span></div>
-      <div class="stat"><b>${completedCount()}/${lessons.length}</b><span>leksjoner</span></div>
+      <div class="stat"><b>${completedCount()}/${lessons.length}</b><span>${completedCount() === 1 ? "leksjon" : "leksjoner"}</span></div>
       <div class="stat"><b>${dueCount(state)}</b><span>forfalte kort</span></div>
     </div>
     <p>Lesetekster: <strong>${Object.values(state.readings).filter((item) => item.completed).length}/${readings.length}</strong>. <a href="#/lesing">Åpne lesing</a></p>
@@ -845,13 +973,14 @@ function conceptMeter(concept) {
   const stats = state.concepts[concept.id];
   const attempts = stats?.attempts || 0;
   const mastery = attempts ? conceptMastery(state, concept.id) : 0;
-  const tone = !attempts ? "none" : mastery < 60 ? "low" : mastery < 80 ? "mid" : "ok";
+  const ready = attempts >= MIN_MASTERY_ATTEMPTS;
+  const tone = !ready ? "none" : mastery < 60 ? "low" : mastery < 80 ? "mid" : "ok";
   return `<article class="concept">
     <h3><button class="text-btn" type="button" data-action="practice-concept" data-concept="${esc(concept.id)}">${esc(concept.name)}</button></h3>
     <p class="en" lang="en">${esc(concept.nameEn)}. ${esc(concept.blurb)}</p>
     <div class="meter ${tone}">
-      <div class="meter-track"><span style="width:${attempts ? mastery : 0}%"></span></div>
-      <span>${attempts ? `${mastery} %` : "ikke øvd"}</span>
+      <div class="meter-track"><span style="width:${ready ? mastery : 0}%"></span></div>
+      <span>${!attempts ? "ikke øvd" : !ready ? "for få svar ennå" : `${mastery} %`}</span>
     </div>
   </article>`;
 }
@@ -859,7 +988,8 @@ function conceptMeter(concept) {
 function renderMore() {
   return `
     <h1>Mer</h1>
-    <article class="card"><h2>Lesing</h2><p>${readings.length} tekster med innspilt opplesning.</p><a class="btn" href="#/lesing">Åpne lesetekstene</a></article>
+    <article class="card"><h2>Lesing</h2><p>${readings.length} tekster med innspilt opplesning, gruppert etter nivå.</p><a class="btn" href="#/lesing">Åpne lesetekstene</a></article>
+    <article class="card"><h2>Uttale</h2><p>Minimale par: hør ordet og velg hvilket det var.</p><a class="btn" href="#/uttale">Åpne uttale</a></article>
     <article class="card"><h2>Ordbank</h2><p>${allVocab().length} oppslag fra kurset og en ekstra bank.</p><a class="btn" href="#/ord">Åpne ordbanken</a></article>
     <article class="card"><h2>Innstillinger</h2><p>Nivå, eksport og import av fremgang.</p><a class="btn" href="#/innstillinger">Åpne innstillinger</a></article>
     <article class="card"><h2>Om</h2><p>Bokmål, forklaringer på engelsk, ferdigskrevne øvelser. Fremgangen ligger i denne nettleseren.</p><a class="btn secondary" href="#/om">Les om appen</a></article>
@@ -869,7 +999,7 @@ function renderMore() {
 function renderAbout() {
   return `
     <h1>Om appen</h1>
-    <p>Norsk hver dag er en statisk øvelsesbok. Den velger neste leksjon ut fra nivå og hvilke emner som er svakest, og den legger ord og feil i en enkel repetisjonskø.</p>
+    <p>Norsk hver dag er en statisk øvelsesbok. Den velger neste leksjon ut fra nivå og hvilke emner som er svakest, og den legger ord og feil i en enkel repetisjonskø. Lydfilene ligger på samme nettsted. Appen har ingen egen frakoblet lagring, så første besøk trenger nett.</p>
     <div class="english" lang="en">
       <p>There is no server and no model in the loop. If a sentence is in the app, it was written into the lesson files. Export the JSON if you want the same streak on another phone.</p>
     </div>
@@ -882,42 +1012,56 @@ function renderVocab() {
   const query = mem.query.trim().toLowerCase();
   const groups = groupVocab(allVocab());
   const themes = ["alle", ...new Set(groups.flatMap((group) => group.themes))];
+  const levels = ["alle", "A1", "A2", "B1", "B2", "C1"];
   const list = groups.filter((group) => {
     const themeOk = mem.theme === "alle" || group.themes.includes(mem.theme);
+    const levelOk = !mem.level || mem.level === "alle" || group.level === mem.level;
     const hay = `${group.display} ${group.en} ${group.examples.join(" ")}`.toLowerCase();
-    return themeOk && (!query || hay.includes(query));
+    return themeOk && levelOk && (!query || hay.includes(query));
   });
+  const capped = mem.level && mem.level !== "alle" ? list : list.slice(0, 80);
   return `
     <h1>Ordbank</h1>
-    <p class="fine">Like oppslag er slått sammen. «ei uke» og «en uke» står som «ei/en uke». Trykk på pilen for å høre ordet.</p>
+    <p class="fine">Like oppslag er slått sammen. «ei uke» og «en uke» står som «ei/en uke». Grammatikk er ord fra leksjonene. Bindeord er småord som knytter setninger. Trykk på pilen for å høre.</p>
     <label>Søk
       <input id="vocab-search" type="search" data-vocab-query value="${esc(mem.query)}" />
     </label>
+    <div class="filters row" role="group" aria-label="Nivå">${levels
+      .map(
+        (level) =>
+          `<button type="button" class="btn ghost" data-action="vocab-level" data-level="${esc(level)}" aria-pressed="${(mem.level || "alle") === level}">${esc(level === "alle" ? "Alle nivå" : level)}</button>`,
+      )
+      .join("")}</div>
     <div class="filters row" role="group" aria-label="Tema">${themes
       .map(
-        (theme) => `<button type="button" class="btn ghost" data-action="theme" data-theme="${esc(theme)}" aria-pressed="${mem.theme === theme}">${esc(theme)}</button>`,
+        (theme) =>
+          `<button type="button" class="btn ghost" data-action="theme" data-theme="${esc(theme)}" aria-pressed="${mem.theme === theme}">${esc(theme === "alle" ? "Alle tema" : themeLabel(theme))}</button>`,
       )
       .join("")}</div>
     <p class="fine">${list.length} treff</p>
-    ${list
-      .slice(0, 80)
+    ${capped
       .map((group) => {
         const src = vocabAudio[group.ids[0]] || "";
         return `<article class="word">
           <div class="word-head">
             <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(src)}" aria-label="Spill av ${esc(group.display)}">▶</button>
             <div>
-              <div class="no">${esc(group.display)}</div>
+              <div class="no" lang="nb">${esc(group.display)}</div>
               <div class="en" lang="en">${esc(group.en)}</div>
             </div>
           </div>
-          ${group.examples.map((example) => `<div>${esc(example)}</div>`).join("")}
+          ${group.examples
+            .map(
+              (example) =>
+                `<div class="example-line">${playButton(clipFor(example), "Spill av eksempelsetningen")}<span lang="nb">${esc(example)}</span></div>`,
+            )
+            .join("")}
           ${group.articlePair ? `<p class="fine">Begge artiklene er riktig bokmål.</p>` : ""}
-          <div class="fine">${esc(group.level)} · ${esc(group.themes.join(", "))}</div>
+          <div class="fine">${esc(group.level)} · ${esc(group.themes.map(themeLabel).join(", "))}</div>
         </article>`;
       })
       .join("")}
-    ${list.length > 80 ? `<p class="fine">Viser 80 av ${list.length}. Snevre inn søket for resten.</p>` : ""}
+    ${capped.length < list.length ? `<p class="fine">Viser ${capped.length} av ${list.length}. Velg et nivå for resten.</p>` : ""}
   `;
 }
 
@@ -969,9 +1113,13 @@ function renderLesson(id) {
       <h1>${esc(lesson.title)}</h1>
       <p class="en" lang="en">${esc(lesson.titleEn)}</p>
       <p>${esc(lesson.maal)}</p>
-      <div class="english" lang="en">${paragraphs(lesson.intro).map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}</div>
-      <p class="husk"><strong>Husk.</strong> ${esc(lesson.husk)}</p>
-      ${lesson.examples.map((example) => `<div class="example"><div class="no">${esc(example.no)}</div><div class="en" lang="en">${esc(example.en)}</div></div>`).join("")}
+      <div class="english" lang="en">${englishHtml(lesson.intro)}</div>
+      <p class="husk"><strong>Husk.</strong> <span lang="nb">${esc(lesson.husk)}</span></p>
+      ${lesson.examples
+        .map(
+          (example) => `<div class="example"><div class="no">${playButton(clipFor(example.no), `Spill av: ${example.no}`)} <span lang="nb">${esc(example.no)}</span></div><div class="en" lang="en">${esc(example.en)}</div></div>`,
+        )
+        .join("")}
       <button class="btn" type="button" data-action="phase" data-phase="words">Videre til ordene</button>
     `;
   }
@@ -981,13 +1129,26 @@ function renderLesson(id) {
       <h1>Nye ord</h1>
       <p class="en" lang="en"><span class="en-label">EN</span> These go into the spaced-repetition queue after this step.</p>
       ${lesson.vocab
-        .map(
-          (word) => `<article class="word"><div class="no">${esc(word.no)}</div><div class="en" lang="en">${esc(word.en)}</div><div>${esc(word.example)}</div><div class="fine" lang="en">${esc(word.exampleEn)}</div></article>`,
-        )
+        .map((word) => {
+          const forms = word.forms && (lesson.level === "B2" || lesson.level === "C1" || lesson.track === "jobb") ? word.forms : "";
+          return `<article class="word">
+            <div class="word-head">
+              ${playButton(vocabAudio[word.id], `Spill av ${word.no}`)}
+              <div>
+                <div class="no" lang="nb">${esc(word.no)}</div>
+                <div class="en" lang="en">${esc(word.en)}</div>
+              </div>
+            </div>
+            ${forms ? `<p class="fine" lang="nb">${esc(forms)}</p>` : ""}
+            <div class="example-line">${playButton(clipFor(word.example), "Spill av eksempelet")} <span lang="nb">${esc(word.example)}</span></div>
+            <div class="fine" lang="en">${esc(word.exampleEn)}</div>
+          </article>`;
+        })
         .join("")}
       <button class="btn" type="button" data-action="phase" data-phase="quiz">Til øvelsene</button>
     `;
   }
+  if (session.phase === "produce" && lesson.produce) return renderProduce(lesson);
   if (session.phase === "done") return renderResult(lesson.title, session);
   if (session.phase !== "quiz") {
     session.phase = "intro";
@@ -1009,7 +1170,7 @@ function renderPlacement() {
   const session = state.session;
   if (session.phase === "done") return renderPlacementResult(session);
   const exercise = placement.items[session.index];
-  return exerciseBlock(exercise, `Spørsmål ${session.index + 1} av ${placement.items.length}`);
+  return exerciseBlock(exercise, `Spørsmål ${session.index + 1} av ${placement.items.length}`, { showConcept: false });
 }
 
 function renderPlacementResult(session) {
@@ -1018,8 +1179,8 @@ function renderPlacementResult(session) {
   return `
     <p class="kicker">Forslag</p>
     <h1>${esc(result.suggested)}</h1>
-    <p>${result.correct} av ${result.total} riktige · ${result.score} %.</p>
-    <div class="english" lang="en"><p>This is a suggestion. B2 and C1 are close together on purpose. Pick the level whose lessons you want tomorrow, even if it is not the suggestion.</p></div>
+    <p>${result.correct} av ${result.total} riktige · ${result.score} %. Vanskelige spørsmål teller mer enn de lette, så prosenten og forslaget er ikke det samme tallet.</p>
+    <div class="english" lang="en"><p>Hard items carry more weight, and C2 only appears when the C1 items are essentially all correct. Pick the level whose lessons you want tomorrow.</p></div>
     <button class="btn full" type="button" data-action="confirm-level" data-level="${esc(result.suggested)}" data-source="placement">Bruk ${esc(result.suggested)}</button>
     ${previous && previous !== result.suggested ? `<button class="btn secondary full" type="button" data-action="confirm-level" data-level="${esc(previous)}" data-source="placement">Behold ${esc(previous)}</button>` : ""}
     <h2>Andre nivå</h2>
@@ -1079,19 +1240,117 @@ function renderReview() {
   return `<h1>Denne oppgaven mangler</h1><button class="btn" type="button" data-action="next">Hopp over</button>`;
 }
 
+function renderProduce(lesson) {
+  const task = lesson.produce;
+  const checks = mem.produceChecks || {};
+  return `
+    <p class="kicker">Egen produksjon · frivillig</p>
+    <h1>${esc(task.prompt)}</h1>
+    ${task.promptEn ? `<p class="en" lang="en"><span class="en-label">EN</span> ${esc(task.promptEn)}</p>` : ""}
+    <p class="fine">Appen retter ikke teksten. Skriv eller ta opp, se modellsvar, og kryss av selv.</p>
+    <label>Din tekst
+      <textarea data-draft autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off">${esc(mem.draft)}</textarea>
+    </label>
+    <div class="row">
+      <button class="btn ghost" type="button" data-action="toggle-model" aria-pressed="${Boolean(mem.showHelp)}">${mem.showHelp ? "Skjul modellsvar" : "Vis modellsvar"}</button>
+      <button class="btn ghost" type="button" data-action="skip-produce">Hopp over</button>
+    </div>
+    ${mem.showHelp ? `<article class="example"><div class="no" lang="nb">${esc(task.model)}</div>${task.modelEn ? `<div class="en" lang="en">${esc(task.modelEn)}</div>` : ""}</article>` : ""}
+    <fieldset>
+      <legend>Sjekk selv</legend>
+      ${(task.checks || [])
+        .map(
+          (label, index) =>
+            `<label class="check"><input type="checkbox" data-produce-check="${index}" ${checks[index] ? "checked" : ""} /> ${esc(label)}</label>`,
+        )
+        .join("")}
+    </fieldset>
+    <button class="btn" type="button" data-action="finish-produce">Ferdig med leksjonen</button>
+  `;
+}
+
+function wrongSummary(session) {
+  const wrong = (session.answers || []).filter((answer) => answer && answer.ok === false && answer.explanation);
+  if (!wrong.length) return "";
+  return `<h2>Det som ikke stemte</h2>${wrong
+    .map(
+      (answer) => `<article class="concept">
+        <h3>${esc(answer.prompt || "Oppgave")}</h3>
+        ${answer.given ? `<p>Du valgte: ${esc(answer.given)}</p>` : ""}
+        <p>Riktig svar: ${esc(answer.expected || "")}</p>
+        <p class="en" lang="en">${esc(answer.explanation)}</p>
+      </article>`,
+    )
+    .join("")}`;
+}
+
+function dayNext(session) {
+  const queue = state.dayQueue;
+  if (!queue) return "";
+  if (session.kind === "lesson" && queue.stage === "lesson") {
+    return `<p><button class="btn" type="button" data-action="day-review">Neste: repetisjon</button></p>`;
+  }
+  if (session.kind === "review" && queue.stage === "review" && queue.readingId) {
+    return `<p><button class="btn" type="button" data-action="day-reading">Neste: lesetekst</button></p>`;
+  }
+  return "";
+}
+
+function startDay() {
+  const lesson = recommendLesson(state, lessons);
+  const reading = suggestReading();
+  if (!lesson) return;
+  state.dayQueue = { lessonId: lesson.id, readingId: reading?.id || "", stage: "lesson" };
+  startLesson(lesson.id);
+}
+
 function renderResult(title, session) {
   const correct = session.answers.filter((answer) => answer.ok).length;
   return `
     <p class="kicker">Ferdig</p>
     <h1>${esc(title)}</h1>
     <p><strong>${correct} av ${session.answers.length}</strong> riktige · ${session.score} %.</p>
-    <p>Rekke: ${state.streak.current} dager. Beste: ${state.streak.best}.</p>
+    <p>Rekke: ${tally(state.streak.current, "dag", "dager")}. Beste: ${state.streak.best}.</p>
+    ${dayNext(session)}
     <div class="row">
       <a class="btn" href="#/">I dag</a>
       <a class="btn secondary" href="#/fremgang">Fremgang</a>
       ${session.kind === "reading" ? `<a class="btn ghost" href="#/lesing">Flere tekster</a>` : ""}
     </div>
+    ${wrongSummary(session)}
     ${session.dictAnswers?.length ? `<p class="fine">Diktat: ${session.dictAnswers.filter((item) => item?.ok).length} av ${session.dictAnswers.filter(Boolean).length} uten å telle store bokstaver og tegn.</p>` : ""}
+  `;
+}
+
+function renderPronunciation() {
+  const items = pronunciationItems();
+  const index = Math.min(mem.pronIndex || 0, items.length - 1);
+  const item = items[index];
+  const src = `audio/uttale/${item.id}.mp3`;
+  return `
+    <p class="kicker">Uttale · ${index + 1} av ${items.length}</p>
+    <h1>${esc(item.group)}</h1>
+    <p class="en" lang="en"><span class="en-label">EN</span> ${esc(pronunciation.intro)}</p>
+    <p class="en" lang="en">${esc(pronunciation.ukrainian)}</p>
+    ${item.caution ? `<p class="note">${esc(item.caution)}</p>` : ""}
+    <div class="player">
+      <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(src)}" aria-label="Spill ordet">▶</button>
+      <div><strong>Hvilket ord hørte du?</strong></div>
+    </div>
+    <div class="options" role="radiogroup">
+      ${item.options
+        .map(
+          (option) =>
+            `<button type="button" class="option" data-action="pron-choose" data-value="${esc(option)}" aria-pressed="${mem.choice === option}">${esc(option)}</button>`,
+        )
+        .join("")}
+    </div>
+    ${mem.feedback ? `<div class="feedback ${mem.feedback.ok ? "ok" : "bad"}" id="feedback" tabindex="-1"><p><strong>${mem.feedback.ok ? "Riktig." : "Ikke helt."}</strong></p><p>${esc(item.note)}</p></div>` : ""}
+    ${
+      mem.feedback
+        ? `<button class="btn" type="button" data-action="pron-next">${index + 1 >= items.length ? "Start på nytt" : "Neste"}</button>`
+        : `<button class="btn" type="button" data-action="pron-check">Sjekk</button>`
+    }
   `;
 }
 
@@ -1117,23 +1376,30 @@ function renderLogin() {
 }
 
 function renderReadingList() {
+  const levels = ["A2", "B1", "B2", "C1"];
   return `
     <h1>Lesing</h1>
-    <p>Korte tekster du kan lese og høre. Opplesningen ligger som en lydfil, så du kan sjekke uttalen uten nett.</p>
+    <p>Tekstene er gruppert etter nivå. Opplesningen ligger som lydfiler på samme nettsted. Appen lagrer dem ikke for frakoblet bruk.</p>
     <p class="en" lang="en"><span class="en-label">EN</span> The recording is the same text, read aloud in bokmål. Use it as a pronunciation reference.</p>
-    ${readings
-      .map((reading) => {
-        const done = state.readings?.[reading.id]?.completed;
-        return `<article class="lesson-card ${done ? "done" : ""}">
-          <p class="meta">${esc(reading.level)} · ${reading.minutes} min</p>
+    ${levels
+      .map((level) => {
+        const items = readings.filter((reading) => reading.level === level);
+        if (!items.length) return "";
+        return `<h2>${level}</h2>${items.map((reading) => readingCardRow(reading)).join("")}`;
+      })
+      .join("")}
+  `;
+}
+
+function readingCardRow(reading) {
+  const done = state.readings?.[reading.id]?.completed;
+  return `<article class="lesson-card ${done ? "done" : ""}">
+          <p class="meta">${esc(reading.level)} · ${reading.minutes} min${reading.dialogue ? " · dialog" : ""}</p>
           <h3>${esc(reading.title)}</h3>
           <p class="en" lang="en">${esc(reading.titleEn)}</p>
           <p class="fine">${done ? `Lest · ${state.readings[reading.id].bestScore} %` : "Ikke lest"}</p>
           <a class="btn" href="#/lesing/${esc(reading.id)}">Åpne</a>
         </article>`;
-      })
-      .join("")}
-  `;
 }
 
 function voiceLabel(voice) {
@@ -1161,21 +1427,26 @@ function renderReadingArticle(reading) {
   const body = reading.paragraphs
     .map((paragraph) => {
       const rows = paragraph
-        .map((text) => {
+        .map(() => {
           const sentence = sentences[cursor];
           cursor += 1;
           const number = cursor;
           const key = sentence.audio;
           const recording = mem.recordingKey === key;
           const take = mem.takes[key];
-          const shown = mem.hideText ? `Setning ${number}` : text;
+          const shown = mem.hideText ? `Setning ${number}` : sentence.text;
+          const speaker = sentence.voice && sentence.voice !== reading.voice ? voiceLabel(sentence.voice) : reading.dialogue ? voiceLabel(sentence.voice || reading.voice) : "";
           return `<div class="sentence-row">
             <div class="sentence-actions">
               <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(sentence.audio)}" aria-label="Spill setning ${number}">▶</button>
               <button class="icon-btn ${recording ? "rec" : ""}" type="button" data-action="record-sentence" data-key="${esc(key)}" data-src="${esc(sentence.audio)}" aria-pressed="${recording}" aria-label="${recording ? "Stopp opptak" : "Ta opp setningen"}">${recording ? "■" : "●"}</button>
               ${take ? `<button class="icon-btn" type="button" data-action="compare-take" data-key="${esc(key)}" data-src="${esc(sentence.audio)}" aria-label="Sammenlign opptaket med opplesningen">⇄</button>` : ""}
             </div>
-            <p>${esc(shown)}</p>
+            <div>
+              ${speaker ? `<p class="fine">${esc(speaker)}</p>` : ""}
+              <p lang="nb">${esc(shown)}</p>
+              ${mem.showHelp && sentence.en ? `<p class="en" lang="en">${esc(sentence.en)}</p>` : ""}
+            </div>
           </div>`;
         })
         .join("");
@@ -1183,7 +1454,7 @@ function renderReadingArticle(reading) {
     })
     .join("");
   return `
-    <p class="kicker">${esc(reading.level)} · ${reading.minutes} min · ${esc(voiceLabel(reading.voice))}</p>
+    <p class="kicker">${esc(reading.level)} · ${reading.minutes} min · ${esc(reading.dialogue ? "Pernille og Finn" : voiceLabel(reading.voice))}</p>
     <h1>${esc(reading.title)}</h1>
     <p class="en" lang="en">${esc(reading.titleEn)}</p>
     <div class="player">
@@ -1194,9 +1465,21 @@ function renderReadingArticle(reading) {
       </div>
     </div>
     <p class="note" data-audio-error hidden>Nettleseren spiller ikke lydfilen. Du kan fortsatt lese teksten.</p>
-    <p class="fine">Stemmen er bokmål. ▶ spiller setningen. ● tar opp stemmen din på denne enheten, og spiller originalen og opptaket etter hverandre. Ingenting lastes opp.</p>
+    <p class="fine">Stemmen er bokmål. ▶ spiller setningen. ● tar opp stemmen din på denne enheten. Opptaket stopper når du forlater siden, og etter 45 sekunder. Ingenting lastes opp. Etter opptak trykker du ⇄ selv, så Safari på iPhone får lov til å spille lyden.</p>
     ${mem.micNote ? `<p class="note" role="alert">${esc(mem.micNote)}</p>` : ""}
-    <button class="btn ghost" type="button" data-action="toggle-text" aria-pressed="${mem.hideText}">${mem.hideText ? "Vis teksten" : "Skjul teksten"}</button>
+    <div class="row">
+      <button class="btn ghost" type="button" data-action="toggle-text" aria-pressed="${mem.hideText}">${mem.hideText ? "Vis teksten" : "Skjul teksten"}</button>
+      ${
+        reading.glossary || sentences.some((sentence) => sentence.en)
+          ? `<button class="btn ghost" type="button" data-action="toggle-help" aria-pressed="${mem.showHelp}">${mem.showHelp ? "Skjul hjelp" : "Vis hjelp"}</button>`
+          : ""
+      }
+    </div>
+    ${
+      mem.showHelp && reading.glossary?.length
+        ? `<ul class="glossary">${reading.glossary.map((item) => `<li><span lang="nb">${esc(item.no)}</span> — <span lang="en">${esc(item.en)}</span></li>`).join("")}</ul>`
+        : ""
+    }
     <article class="reading">${body}</article>
     <div class="row">
       <button class="btn" type="button" data-action="start-dictation" data-id="${esc(reading.id)}">Til diktat</button>
@@ -1224,8 +1507,9 @@ function renderDictation(reading) {
     <p class="note" data-audio-error hidden>Nettleseren spiller ikke lydfilen.</p>
     ${mem.note ? `<p class="note" role="alert">${esc(mem.note)}</p>` : ""}
     <label>Din setning
-      <textarea data-draft ${mem.locked ? "disabled" : ""}>${esc(mem.draft)}</textarea>
+      <textarea data-draft autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" ${mem.locked ? "disabled" : ""}>${esc(mem.draft)}</textarea>
     </label>
+    ${mem.locked ? "" : `<div class="row" aria-label="Norske bokstaver">${["æ", "ø", "å", "Æ", "Ø", "Å"].map((letter) => `<button class="btn ghost" type="button" data-action="insert-letter" data-letter="${letter}">${letter}</button>`).join("")}</div>`}
     ${mem.feedback ? dictationFeedback(mem.feedback) : ""}
     ${
       mem.locked
@@ -1238,6 +1522,16 @@ function renderDictation(reading) {
 function dictationFeedback(feedback) {
   const marks = (feedback.diff || [])
     .map((part) => {
+      if (part.type === "spell" && part.letters) {
+        const letters = part.letters
+          .map((letter) => {
+            if (letter.type === "missing") return `<mark class="miss">${esc(letter.text)}</mark>`;
+            if (letter.type === "extra") return `<del>${esc(letter.text)}</del>`;
+            return esc(letter.text);
+          })
+          .join("");
+        return `<span class="spell">${letters}</span>`;
+      }
       if (part.type === "missing") return `<mark class="miss">${esc(part.text)}</mark>`;
       if (part.type === "extra") return `<del>${esc(part.text)}</del>`;
       return esc(part.text);
@@ -1247,7 +1541,7 @@ function dictationFeedback(feedback) {
     <p><strong>${feedback.ok ? "Riktig." : "Ikke helt."}</strong></p>
     <p class="diff">${marks}</p>
     <p>Setningen var: ${esc(feedback.expected)}</p>
-    <p class="fine">Gult mangler. Overstreket er ekstra. Store bokstaver og tegn teller ikke.</p>
+    <p class="fine">Gult mangler. Overstreket er ekstra. Én feil bokstav vises inni ordet. Store bokstaver og tegn teller ikke. Tall kan skrives med siffer eller ord.</p>
   </div>`;
 }
 
@@ -1264,6 +1558,8 @@ let playToken = 0;
 let clipDone = null;
 let recorder = null;
 let recordStream = null;
+let recordTimer = null;
+const RECORD_LIMIT_MS = 45000;
 
 function absoluteSrc(src) {
   return new URL(src, location.href).href;
@@ -1409,9 +1705,31 @@ function releaseStream() {
   recordStream = null;
 }
 
+function stopRecording() {
+  if (recordTimer) {
+    clearTimeout(recordTimer);
+    recordTimer = null;
+  }
+  if (recorder && recorder.state === "recording") {
+    try {
+      recorder.stop();
+    } catch {
+      releaseStream();
+      mem.recordingKey = "";
+      recorder = null;
+    }
+    return;
+  }
+  releaseStream();
+  if (mem.recordingKey) {
+    mem.recordingKey = "";
+    recorder = null;
+  }
+}
+
 async function toggleRecord(key, src) {
   if (recorder && recorder.state === "recording") {
-    recorder.stop();
+    stopRecording();
     return;
   }
   if (mem.recordingKey === "pending") return;
@@ -1452,12 +1770,16 @@ async function toggleRecord(key, src) {
     mem.takes[key] = url;
     mem.recordingKey = "";
     recorder = null;
+    mem.micNote = "Opptaket er klart. Trykk ⇄ for å høre originalen og deretter deg selv.";
     render();
-    playThen(src, url);
   };
   mem.recordingKey = key;
   mem.micNote = "";
-  recorder.start();
+  recorder.start(1000);
+  recordTimer = setTimeout(() => {
+    mem.micNote = "Opptaket stoppet etter 45 sekunder.";
+    stopRecording();
+  }, RECORD_LIMIT_MS);
   render();
 }
 
@@ -1481,6 +1803,8 @@ function render() {
           ? current.id
             ? renderReading(current.id)
             : renderReadingList()
+          : current.name === "uttale"
+            ? renderPronunciation()
         : current.name === "jobb"
           ? renderJob()
           : current.name === "fremgang"
@@ -1501,7 +1825,7 @@ function render() {
                           ? renderReview()
                           : `<h1>Fant ikke siden</h1><a class="btn" href="#/">Hjem</a>`;
   main.innerHTML = view;
-  const tab = ["ord", "innstillinger", "om", "lesing"].includes(current.name) ? "mer" : current.name;
+  const tab = ["ord", "innstillinger", "om", "uttale"].includes(current.name) ? "mer" : current.name;
   for (const link of document.querySelectorAll(".tabbar a")) {
     if ((link.dataset.tab || "home") === (tab || "home")) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
@@ -1619,6 +1943,68 @@ function onClick(event) {
     mem.theme = button.dataset.theme;
     render();
   }
+  if (action === "vocab-level") {
+    mem.level = button.dataset.level;
+    render();
+  }
+  if (action === "toggle-help" || action === "toggle-model") {
+    mem.showHelp = !mem.showHelp;
+    render();
+  }
+  if (action === "insert-letter") {
+    const box = document.querySelector("[data-draft]");
+    const letter = button.dataset.letter || "";
+    const start = box?.selectionStart ?? mem.draft.length;
+    const end = box?.selectionEnd ?? start;
+    mem.draft = `${mem.draft.slice(0, start)}${letter}${mem.draft.slice(end)}`;
+    render();
+    const next = document.querySelector("[data-draft]");
+    if (next) {
+      next.focus();
+      const cursor = start + letter.length;
+      next.setSelectionRange(cursor, cursor);
+    }
+  }
+  if (action === "pron-choose") {
+    mem.choice = button.dataset.value;
+    render();
+  }
+  if (action === "pron-check") {
+    const items = pronunciationItems();
+    const item = items[Math.min(mem.pronIndex || 0, items.length - 1)];
+    if (!mem.choice) {
+      mem.note = "Velg et ord først.";
+      render();
+      return;
+    }
+    mem.feedback = { ok: mem.choice === item.word };
+    mem.locked = true;
+    focusMode = "feedback";
+    render();
+  }
+  if (action === "pron-next") {
+    const items = pronunciationItems();
+    const index = mem.pronIndex || 0;
+    mem.pronIndex = index + 1 >= items.length ? 0 : index + 1;
+    mem.choice = null;
+    mem.feedback = null;
+    mem.locked = false;
+    focusMode = "route";
+    render();
+  }
+  if (action === "start-day") startDay();
+  if (action === "day-review") {
+    if (state.dayQueue) state.dayQueue.stage = "review";
+    startReview();
+  }
+  if (action === "day-reading") {
+    const id = state.dayQueue?.readingId;
+    if (state.dayQueue) state.dayQueue.stage = "done";
+    if (id) go(`#/lesing/${id}`);
+  }
+  if (action === "skip-produce" || action === "finish-produce") {
+    finishSession();
+  }
   if (action === "export") downloadProgress();
   if (action === "reset-ask") openReset();
   if (action === "reset-yes") {
@@ -1714,6 +2100,14 @@ function onSubmit(event) {
 }
 
 function onKeydown(event) {
+  if (event.key === "Enter" && mem.locked && document.activeElement?.tagName !== "TEXTAREA") {
+    const next = document.querySelector("[data-action='next'], [data-action='next-dict']");
+    if (next) {
+      event.preventDefault();
+      next.click();
+    }
+    return;
+  }
   if (mem.locked) return;
   if (/^[1-9]$/.test(event.key) && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
     const option = document.querySelectorAll(".option")[Number(event.key) - 1];
@@ -1737,6 +2131,11 @@ document.addEventListener("keydown", onKeydown);
 window.addEventListener("hashchange", () => {
   focusMode = "route";
   haltAudio();
+  stopRecording();
   render();
+});
+window.addEventListener("pagehide", () => stopRecording());
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") stopRecording();
 });
 render();

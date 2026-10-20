@@ -66,7 +66,7 @@ Subject lines are noun phrases, not full letters: Status IT-kostnader september 
         "Fyll inn de to første ordene i den faste setningen.",
         "___ finner du statusrapporten.",
         ["Vedlagt"],
-        "The full sentence is Vedlagt finner du statusrapporten. The blank is the first word; finner is already the verb in second place if you only insert Vedlagt. Wait: the text is «___ finner du statusrapporten.» so the answer Vedlagt gives Vedlagt finner du statusrapporten. Correct.",
+        "Vedlagt is the first element, and finner is already the verb in second place. The finished sentence is Vedlagt finner du statusrapporten.",
       ),
       fix(
         "register",
@@ -100,6 +100,13 @@ Subject lines are noun phrases, not full letters: Status IT-kostnader september 
         "Write a short opening plus the point. Use Som avtalt.",
       ),
     ],
+    produce: {
+      prompt: "Skriv en kort e-post på fire-fem linjer: hei, formål, vedlegg, én forespørsel og hilsen.",
+      promptEn: "Write a short email: greeting, purpose, attachment, one request and a close.",
+      model: "Hei Kari. Som avtalt sender jeg statusrapporten. Vedlagt finner du tallene for september. Kunne du gi en tilbakemelding innen torsdag? Vennlig hilsen Tsvitana",
+      modelEn: "Hello Kari. As agreed I am sending the status report. The September figures are attached. Could you reply by Thursday? Kind regards, Tsvitana",
+      checks: ["Emnet kommer tidlig.", "Det er bare én forespørsel.", "Avslutningen er Vennlig hilsen, ikke De."],
+    },
   }),
   lesson({
     id: "jobb-02",
@@ -208,7 +215,7 @@ End with a sentence the manager can act on. Jeg anbefaler at … or Neste steg e
     titleEn: "Minutes",
     concepts: ["register", "passive"],
     maal: "Du skriver referat med sak, vedtak, ansvar og frist.",
-    husk: "Tilstede er overskrift. I teksten: til stede. Vedtak: … Ansvarlig: … Frist: …",
+    husk: "Til stede, også i overskriften. Vedtak: … Ansvarlig: … Frist: …",
     intro: `Minutes are a list the organisation can reuse, not a transcript. Write what was decided, who does it, and by when. Leave out the jokes and most of the discussion. If the discussion matters, one sentence of background is enough: Saken ble drøftet. Vedtaket ble … 
 
 A simple entry:
@@ -218,7 +225,7 @@ Orientering ved Tsvitana. Lisenskostnaden har et negativt avvik på 4 prosent.
 Vedtak: Prognosen oppdateres innen fredag.
 Ansvarlig: Tsvitana. Frist: fredag 24. oktober.
 
-Til stede is two words in running text. As a heading, many organisations write Tilstede. Both point at the same fact; in sentences, write Vi var til stede. The person writing is referenten. Innkalling is the invitation sent before the meeting. Saksliste is the agenda.
+Til stede is two words, in a sentence and in a heading. Bokmålsordboka has only til stede. Tilstede as one word is a template habit, not the form to write. The person writing is referenten. Innkalling is the invitation sent before the meeting. Saksliste is the agenda.
 
 Passive fits decisions because the decision belongs to the meeting, not to one speaker. Det ble vedtatt å utsette saken. Saken utsettes til 3. november. Use the s-passive for the resulting rule and ble for the event in the room.
 
@@ -244,7 +251,7 @@ Eventuelt is the last agenda item, for business not listed in advance. Do not pu
         "Hva skriver du i løpende tekst?",
         ["Lederen var til stede.", "Lederen var tilstede.", "Lederen var til-stede.", "Lederen var stede til."],
         "Lederen var til stede.",
-        "In a sentence, til stede is two words. Tilstede is a heading you will see in templates, not the form to use in the sentence itself.",
+        "Til stede is two words everywhere, including headings. Tilstede is not the bokmål form.",
       ),
       order(
         "passive",
@@ -257,9 +264,9 @@ Eventuelt is the last agenda item, for business not listed in advance. Do not pu
       fill(
         "passive",
         "Fyll inn hjelpeverbet i ble-passiv.",
-        "Saken ___ utsatt til 3. november.",
+        "I går ___ saken utsatt til 3. november.",
         ["ble"],
-        "A finished event uses ble plus the participle. Utsatt is already in the sentence, so the blank is ble.",
+        "I går places the event in the past, so the auxiliary is ble. Blir, er and har would change the time or the construction, and they are not among the options. Utsatt is already in the sentence.",
       ),
       rewrite(
         "register",

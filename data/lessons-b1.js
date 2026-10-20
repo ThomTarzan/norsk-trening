@@ -56,16 +56,17 @@ Participles to memorise with the verbs: sendt, skrevet, gjort, vært, hatt, bodd
         "tenses",
         "Bygg setningen.",
         ["Jeg", "har", "ikke", "fått", "svar", "ennå"],
-        "Ikke stands after the finite verb har. Ennå usually comes late in the sentence.",
+        "Ikke stands after the finite verb har. Ennå can stand at the end or before ikke: Jeg har ennå ikke fått svar is the same claim.",
         [],
         "Build: I have not received an answer yet.",
+        [["Jeg", "har", "ennå", "ikke", "fått", "svar"]],
       ),
       fix(
         "tenses",
         "Skriv setningen riktig.",
         "Jeg har bodd i Norge i ti år i 2014.",
-        ["Jeg bodde i Norge i ti år", "Jeg bodde i Norge i 2014"],
-        "A closed year is preteritum. If you mean the ten years up to now, drop the finished year: Jeg har bodd i Norge i ti år.",
+        ["Jeg bodde i Norge i ti år", "Jeg bodde i Norge i 2014", "I 2014 hadde jeg bodd i Norge i ti år"],
+        "The original mixes an open period with a closed year, so it is unclear. A finished stay is preteritum: Jeg bodde i Norge i ti år, or Jeg bodde i Norge i 2014. If the ten years were already complete in 2014, pluskvamperfektum is also right: I 2014 hadde jeg bodd i Norge i ti år. The open period up to now is Jeg har bodd i Norge i ti år, without the year.",
       ),
       fill(
         "tenses",
@@ -77,7 +78,7 @@ Participles to memorise with the verbs: sendt, skrevet, gjort, vært, hatt, bodd
       mc(
         "tenses",
         "Hva uttrykker perfektum her: «Jeg har allerede sendt den»?",
-        ["Resultatet gjelder nå.", "Hendelsen skjedde i et navngitt tidspunkt i går.", "Det er en plan for i morgen.", "Det er en vane i presens."],
+        ["Resultatet gjelder nå.", "Hendelsen skjedde på et bestemt tidspunkt i går.", "Det er en plan for i morgen.", "Det er en vane i presens."],
         "Resultatet gjelder nå.",
         "Allerede + har + participle presents the result as relevant now. A named finished time would have pushed the sentence into preteritum.",
         "What does the perfect express here?",
@@ -194,7 +195,7 @@ The participle is the same form as in perfektum. Only the auxiliary changes: har
     intro: `A definite noun with an adjective in front needs two marks. The adjective takes -e, and a determiner appears: den for masculine and feminine singular, det for neuter singular, de for plural.
 
 Den nye rapporten er sendt.
-Det viktige møtet starter ni.
+Det viktige møtet starter klokka ni.
 De store avvikene gjelder lisenser.
 
 The noun keeps its definite ending. That double marking is the next lesson's focus; here the aim is the adjective itself. Ny → nye, stor → store, viktig → viktige. Adjectives that already end in -e do not add another one: det moderne systemet.
@@ -424,7 +425,7 @@ The subject of the clause is what matters, not the subject of the previous sente
         "Fyll inn. «I» er subjekt og eier.",
         "Jeg har sendt rapporten ___.",
         ["min"],
-        "Sin cannot point to jeg. When the subject is jeg, du, vi or dere, use min, din, vår or their inflected forms.",
+        "Sin cannot point to jeg. When the subject is jeg, du, vi or dere, use min, din, vår, deres or their inflected forms.",
       ),
       order(
         "possessives",
@@ -475,7 +476,7 @@ For often marks the person who receives a benefit or carries a responsibility: a
 
 Av marks source or a partitive: en av rapportene, skrevet av Anna, et avvik på to prosent av budsjettet. Med means "with" and joins an instrument or an accompanying thing: med vedlegg, med vennlig hilsen, sammen med teamet.
 
-Hos is "at the place of a person or organisation": hos revisor, hos legen. Employment is usually i: Jeg jobber i Avinor, not "hos Avinor", though hos occurs when you mean "at their office". Prefer i Avinor for the employer.`,
+Hos is "at the place of a person or organisation": hos revisor, hos legen. Employment is usually i: Jeg jobber i Avinor. Jobbe hos Avinor is also ordinary Norwegian when you mean at their workplace, so hos is not an error. In this course, i is the form used for the employer in running text.`,
     examples: [
       { no: "Jeg skriver en rapport om lisenskostnadene.", en: "I am writing a report about the licence costs." },
       { no: "Anna har ansvar for budsjettet.", en: "Anna is responsible for the budget." },
@@ -485,7 +486,7 @@ Hos is "at the place of a person or organisation": hos revisor, hos legen. Emplo
       ["ansvar for", "responsibility for", "Jeg har ansvar for oppfølgingen.", "I am responsible for the follow-up.", "phrase"],
       ["en rapport om", "a report on", "Rapporten om Q3 er kort.", "The report on Q3 is short.", "phrase"],
       ["om to dager", "in two days", "Fristen er om to dager.", "The deadline is in two days.", "phrase"],
-      ["en av", "one of", "En av tallene stemmer ikke.", "One of the figures does not add up.", "phrase"],
+      ["ett av", "one of (neuter)", "Ett av tallene stemmer ikke.", "One of the figures does not add up.", "phrase"],
       ["med vedlegg", "with an attachment", "Jeg sender e-posten med vedlegg.", "I am sending the email with an attachment.", "phrase"],
       ["hos", "at (someone's place)", "Tallene ligger hos revisor.", "The figures are with the auditor.", "prep"],
       ["en revisor", "an auditor", "Revisor stiller ett spørsmål.", "The auditor is asking one question.", "noun"],
@@ -516,8 +517,8 @@ Hos is "at the place of a person or organisation": hos revisor, hos legen. Emplo
       order(
         "prepositions",
         "Bygg setningen.",
-        ["En", "av", "tallene", "stemmer", "ikke"],
-        "En av + definite plural. Ikke comes after the finite verb stemmer.",
+        ["Ett", "av", "tallene", "stemmer", "ikke"],
+        "Tall is neuter, so one of the figures is ett av tallene, not en av. Ikke comes after the finite verb stemmer.",
         [],
         "Build: One of the figures does not add up.",
       ),
@@ -533,7 +534,7 @@ Hos is "at the place of a person or organisation": hos revisor, hos legen. Emplo
         "Hvilken setning er mest naturlig om arbeidsgiver?",
         ["Jeg jobber i Avinor.", "Jeg jobber hos Avinor siden ti år.", "Jeg jobber om Avinor.", "Jeg jobber til Avinor."],
         "Jeg jobber i Avinor.",
-        "Use i with the employer. The second option also uses a wrong time construction; “for ten years” up to now is i ti år.",
+        "I with the employer is the usual form here. Hos Avinor is also possible, but this option is wrong because siden ti år is not Norwegian: a period up to now is i ti år, and the tense would be har jobbet.",
       ),
       fill(
         "prepositions",
@@ -663,14 +664,14 @@ Second, ikke wants a different place inside the subordinate clause. You will dri
 
 Når is used for the future and for repeated times. Da is used for a single event in the past. Når jeg sender rapporten, legger jeg ved tallene. Da møtet startet, manglet ett bilag. Hvis and dersom set a condition. Dersom is a little more formal and fits memos.
 
-Comma: a subordinate clause that stands first always takes a comma after it. A subordinate clause that follows the main clause normally takes a comma too: Jeg blir, fordi rapporten ikke er klar. An at-clause used as the object is the exception and normally has no comma: Jeg ser at avviket er lite.`,
+Comma: a subordinate clause that stands first always takes a comma after it. A subordinate clause that follows the main clause normally does not: Jeg blir fordi rapporten ikke er klar. A comma there is only an optional afterthought, not the rule to learn. An at-clause used as the object has no comma either: Jeg ser at avviket er lite. Two at-clauses joined by og have no comma between them: Jeg ser at tallene stemmer og at avviket er lite.`,
     examples: [
       { no: "Jeg ser at avviket er lite.", en: "I see that the variance is small." },
       { no: "Fordi tallene manglet, utsatte vi møtet.", en: "Because the figures were missing, we postponed the meeting." },
       { no: "Når jeg sender rapporten, legger jeg ved prognosen.", en: "When I send the report, I attach the forecast." },
     ],
     vocab: [
-      ["fordi", "because", "Jeg blir, fordi rapporten ikke er klar.", "I am staying, because the report is not ready.", "subjunction"],
+      ["fordi", "because", "Jeg blir fordi rapporten ikke er klar.", "I am staying because the report is not ready.", "subjunction"],
       ["hvis", "if", "Hvis du vil, kan vi ta det på norsk.", "If you want, we can do it in Norwegian.", "subjunction"],
       ["dersom", "if (more formal)", "Dersom fristen ryker, varsler jeg.", "If the deadline is missed, I will give notice.", "subjunction"],
       ["når", "when (future or repeated)", "Når tallene er klare, sender jeg dem.", "When the figures are ready, I will send them.", "subjunction"],
@@ -735,8 +736,8 @@ Comma: a subordinate clause that stands first always takes a comma after it. A s
         "conjunctions",
         "Skriv setningen riktig.",
         "Jeg blir fordi at rapporten ikke er klar.",
-        ["Jeg blir, fordi rapporten ikke er klar"],
-        "Fordi already subordinates the clause. Do not add at after it. A fordi-clause that follows the main clause normally takes a comma. Ikke stays before the verb inside the subordinate clause.",
+        ["Jeg blir fordi rapporten ikke er klar"],
+        "Fordi already subordinates the clause. Do not add at after it. A fordi-clause after the main clause normally has no comma. A comma is only an optional afterthought, so the form to learn is Jeg blir fordi rapporten ikke er klar.",
       ),
     ],
   }),
