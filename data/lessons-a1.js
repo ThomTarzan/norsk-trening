@@ -462,7 +462,7 @@ Useful question words: hva (what), hvem (who), hvor (where), når (when), hvorfo
     concepts: ["numbers"],
     maal: "Du kan si klokkeslett og ukedager uten de vanligste fellene.",
     husk: "Halv ti er 09.30, ikke 10.30.",
-    intro: `Official bokmål numbers to learn now: sju (syv is also correct), åtte, ni, ti, elleve, tolv, tretten, tjue (20), tretti (30), førti (40), femti (50). The written standard uses tjue and førti, not the older tyve and førr.
+    intro: `Official bokmål numbers to learn now: sju (syv is also correct), åtte, ni, ti, elleve, tolv, tretten, tjue or tyve (20), tretti (30), førti (40), femti (50). Both tjue and tyve are allowed bokmål. Førti is the usual form for 40; førr is not standard bokmål.
 
 The clock is the trap. Halv means half an hour before the next hour. Halv ti is 09.30, not 10.30. Kvart over ni is 09.15. Kvart på ti is 09.45. In writing, times are often given as digits: klokka 09.30. Say klokka, or klokken; both exist, and klokka is very common.
 
@@ -513,10 +513,10 @@ Weekdays are not capitalised in Norwegian: mandag, tirsdag, onsdag, torsdag, fre
       ),
       mc(
         "numbers",
-        "Hvilken skriveform er standard bokmål for 20?",
-        ["tjue", "tyve", "tjuge", "tyv"],
-        "tjue",
-        "The current written standard is tjue, tretti, førti, femti. Tyve is an older form and not the one to learn now.",
+        "Hvilken skriveform er ikke bokmål for 20?",
+        ["tyv", "tjue", "tyve", "tjuge"],
+        "tyv",
+        "Tjue, tyve and tjuge are all allowed bokmål for 20. Tyv is not a number word. Tjue is the form this course uses most often, and tyve is equally correct.",
       ),
       fill(
         "numbers",

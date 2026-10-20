@@ -90,7 +90,7 @@ const coreReadings = [
         "Hei Kari.",
         "Jeg sender et kort notat om status.",
         "Vi har gått gjennom tallene for september.",
-        "De fleste kostnadsstedene er avstemt, men ett kostnadssted mangler et bilag.",
+        "De fleste kontoene er avstemt, men én konto mangler et bilag.",
       ],
       [
         "Jeg har bedt teamet om å finne bilaget innen onsdag.",
@@ -145,7 +145,7 @@ const coreReadings = [
       "Vedtak: Tsvitana sender utkastet innen fredag.",
     ],
     paragraphs: [
-      ["Referat fra et kort møte tolvte oktober.", "Tilstede var Kari, Per og Tsvitana."],
+      ["Referat fra et kort møte tolvte oktober.", "Til stede var Kari, Per og Tsvitana."],
       [
         "Sak 1 var status på rapporten.",
         "Tsvitana sa at utkastet er klart.",
@@ -271,7 +271,7 @@ const coreReadings = [
     paragraphs: [
       [
         "Notat til ledelsen.",
-        "I september økte lisenskostnaden med fire prosent sammenlignet med budsjettet.",
+        "I september lå lisenskostnaden fire prosent over budsjettet.",
         "Økningen skyldes en prisjustering hos leverandøren.",
         "Kostnaden føres på kostnadssted 410 og periodiseres over tolv måneder, i tråd med budsjettet.",
       ],
@@ -320,7 +320,7 @@ const coreReadings = [
         "Hvilken formulering bruker notatet om sammenligningen?",
         ["sammenlignet med budsjettet", "i forhold til budsjettet", "ifølge til budsjettet", "på grunn av budsjettet"],
         "sammenlignet med budsjettet",
-        "Sammenlignet med is the precise choice. I forhold til is vague, and ifølge til is not a phrase.",
+        "The note says sammenlignet med budsjettet. Avvik i forhold til budsjett is ordinary controller language, so that phrase is not treated as an error; it is simply not the wording of this note. Ifølge til is not a Norwegian phrase.",
       ),
     ],
   },

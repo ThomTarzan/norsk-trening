@@ -535,5 +535,13 @@ export const vocabAudio = {
   "bank-188": "audio/ord/en-beslutning-6ef93652.mp3",
   "bank-191": "audio/ord/en-styringsgruppe-ef71fdb7.mp3",
   "bank-192": "audio/ord/en-sak-042a92a1.mp3",
-  "bank-194": "audio/ord/a-apne-en-sak-353c2c19.mp3"
+  "bank-194": "audio/ord/a-apne-en-sak-353c2c19.mp3",
+  "bank-195": "audio/ord/en-manedsavslutning-89a81f84.mp3",
+  "bank-196": "audio/ord/en-kostnadsart-5f35aebd.mp3",
+  "bank-197": "audio/ord/et-merforbruk-f208f5a1.mp3",
+  "bank-198": "audio/ord/et-mindreforbruk-799c694b.mp3",
+  "bank-199": "audio/ord/et-estimat-03972a23.mp3",
+  "bank-200": "audio/ord/en-innkjopsordre-3bf83091.mp3",
+  "bank-201": "audio/ord/en-leverandorreskontro-54b8df72.mp3",
+  "bank-202": "audio/ord/a-anvise-a24c4f47.mp3"
 };

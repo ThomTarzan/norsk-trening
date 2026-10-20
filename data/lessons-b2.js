@@ -12,12 +12,12 @@ export const lessonsB2 = [
     husk: "Hun sier at hun ikke kommer. I helsetning: Hun kommer ikke.",
     intro: `Sentence adverbs such as ikke, aldri and alltid stand after the finite verb in a main clause, but before the finite verb in a subordinate clause.
 
-Main clause: Jeg har ikke sendt rapporten. Hun reiser aldri på søndag.
-Subordinate clause: Hun sier at hun ikke har sendt rapporten. Jeg visste at hun aldri reiste på søndag.
+Main clause: Jeg har ikke sendt rapporten. Hun reiser aldri på søndager.
+Subordinate clause: Hun sier at hun ikke har sendt rapporten. Jeg visste at hun aldri reiste på søndager.
 
 The subordinate markers you already know are at, fordi, hvis, dersom, når, da, selv om and som. After them, the subject still comes first inside that clause. Then the sentence adverb, then the verb. Not "at hun har ikke sendt", and not "at har hun ikke sendt".
 
-When there is an auxiliary, ikke stands before the auxiliary, not before the participle. At jeg ikke har sendt den. Both adverbs can appear, with the frequency adverb often before ikke: at hun vanligvis ikke sender rapporten på fredag.
+When there is an auxiliary, ikke stands before the auxiliary, not before the participle. At jeg ikke har sendt den. Both adverbs can appear, with the frequency adverb often before ikke: at hun vanligvis ikke sender rapporten på fredager. A habit uses the plural: på fredager, på søndager. På fredag is one particular Friday.
 
 This is the single most useful word-order correction if your written Norwegian is already fluent but still follows English "has not" in every clause.`,
     examples: [
@@ -28,7 +28,7 @@ This is the single most useful word-order correction if your written Norwegian i
     vocab: [
       ["en leddsetning", "a subordinate clause", "At-setningen er en leddsetning.", "The at-clause is a subordinate clause.", "noun"],
       ["selv om", "even though", "Selv om det er sent, sender jeg den.", "Even though it is late, I am sending it.", "subjunction"],
-      ["vanligvis", "usually", "Jeg sender den vanligvis på fredag.", "I usually send it on Friday.", "adv"],
+      ["vanligvis", "usually", "Jeg sender den vanligvis på fredager.", "I usually send it on Fridays.", "adv"],
       ["å innse", "to realise", "Jeg innså at tallet ikke stemte.", "I realised that the figure did not add up.", "verb"],
       ["å stemme", "to add up; to be correct", "Tallet stemmer ikke.", "The figure does not add up.", "verb"],
       ["en helsetning", "a main clause", "Helsetningen har V2.", "The main clause has V2.", "noun"],
@@ -82,8 +82,8 @@ This is the single most useful word-order correction if your written Norwegian i
       fix(
         "adverb-sub",
         "Skriv setningen riktig.",
-        "Hun sier at vanligvis hun ikke sender rapporten på fredag.",
-        ["Hun sier at hun vanligvis ikke sender rapporten på fredag"],
+        "Hun sier at vanligvis hun ikke sender rapporten på fredager.",
+        ["Hun sier at hun vanligvis ikke sender rapporten på fredager"],
         "The subject stays before the sentence adverbs. Vanligvis comes before ikke, and both come before the verb.",
       ),
       fill(
@@ -195,7 +195,7 @@ Do not put these adverbs in the empty slot between the subject and the verb of a
     title: "Relativsetninger med som",
     titleEn: "Relative clauses with som",
     concepts: ["relatives", "adverb-sub", "punctuation"],
-    maal: "Du bruker som, og du lar ikke falle bort når det er subjekt.",
+    maal: "Du bruker som, og du lar det ikke falle bort når det er subjekt.",
     husk: "Rapporten som kom i går, er lest. Ikke «rapporten kom i går».",
     intro: `Som is the normal relative particle. It can be the subject or the object of the relative clause, and it does not change for gender or number.
 
@@ -212,7 +212,7 @@ A restrictive relative identifies which thing you mean and has no comma before s
     ],
     vocab: [
       ["som", "that; which; who", "Kollegaen som skrev utkastet, er borte.", "The colleague who wrote the draft is away.", "particle"],
-      ["restriktiv", "restrictive", "En restriktiv relativ er nødvendig for å peke ut hvem eller hva.", "A restrictive relative is needed to identify who or what.", "adj"],
+      ["restriktiv", "restrictive", "En restriktiv relativsetning er nødvendig for å peke ut hvem eller hva.", "A restrictive relative is needed to identify who or what.", "adj"],
       ["vedlagt", "attached", "Filen som er vedlagt, er oppdatert.", "The file that is attached has been updated.", "adj"],
       ["å gjelde", "to concern", "Dette gjelder bare Q3.", "This only concerns Q3.", "verb"],
       ["å forklare", "to explain", "Kan du forklare avviket?", "Can you explain the variance?", "verb"],
@@ -274,11 +274,11 @@ A restrictive relative identifies which thing you mean and has no comma before s
       ),
       mc(
         "relatives",
-        "Når kan «som» oftest sløyfes i formelt språk likevel med fordel beholdes?",
+        "Når kan «som» sløyfes, selv om det i formelt språk gjerne beholdes?",
         ["Når som er objekt", "Når som er subjekt", "Aldri, som finnes ikke", "Bare foran et egennavn"],
         "Når som er objekt",
         "Object-som can be omitted. Subject-som cannot. In formal writing, keeping object-som is still the clearer choice, and these lessons keep it.",
-        "When can som most often be left out, even if formal style prefers to keep it?",
+        "When can som be left out, even though formal style often keeps it?",
       ),
     ],
   }),
@@ -310,7 +310,7 @@ Prepositions stay in the combination you already know. Jeg bor i Oslo. Jeg er p�
       ["å ligge", "to be located; to lie", "Kontoret ligger i Oslo.", "The office is in Oslo.", "verb"],
       ["nær", "near", "Vi sitter nær møterommet.", "We sit near the meeting room.", "prep"],
       ["et møterom", "a meeting room", "Møterommet er opptatt.", "The meeting room is occupied.", "noun"],
-      ["en by", "a city", "Byen er stille på søndag.", "The city is quiet on Sunday.", "noun"],
+      ["en by", "a city", "Byen er stille på søndager.", "The city is quiet on Sundays.", "noun"],
     ],
     exercises: [
       mc(
@@ -486,7 +486,7 @@ Det anbefales at tallene kontrolleres før utsendelse.
 
 Do not force the s-passive into the past. "Rapporten sendtes i går" sounds archaic. Use ble: Rapporten ble sendt i går. The perfect is also bli, not s: Rapporten har blitt sendt.
 
-S-passive has no named agent in ordinary prose. If you need "by Anna", prefer ble skrevet av Anna. Some verbs dislike the s-form in everyday speech; if the s-form sounds odd to you, bli is a safe event-passive. In reports, sendes, vises, omtales, kreves and anbefales are all natural.
+An av-phrase is more common with bli-passive: Rapporten ble skrevet av Anna. In formal text the s-passive can also name the agent: Saken behandles av styret. That is correct bokmål. If the s-form sounds odd to you, bli is a safe event-passive. In reports, sendes, vises, omtales, kreves and anbefales are all natural.
 
 Det + s-passive is a useful impersonal pattern: Det vises til e-posten av 2. oktober. In ordinary email, Jeg viser til e-posten av 2. oktober is warmer and usually better. The next register lessons practise that choice.`,
     examples: [
@@ -668,8 +668,8 @@ Skulle ha vært ferdig means it was supposed to be finished. The participle of v
     intro: `These lessons follow standard bokmål comma practice, close to Språkrådet.
 
 Put a comma after a subordinate clause that stands first: Når tallene er klare, sender jeg dem. The same comma closes a fronted at-clause: At avviket er lite, er godt nytt.
-The norm is also a comma when a subordinate clause follows the main clause: Jeg blir, fordi rapporten ikke er klar. Jeg skriver notatet, hvis tallene er klare.
-An at-clause used as the object is the exception and normally has no comma: Jeg ser at avviket er lite. Not "Jeg ser, at avviket er lite."
+A subordinate clause that follows the main clause normally has no comma: Jeg blir fordi rapporten ikke er klar. Jeg skriver notatet hvis tallene er klare. A comma in that position is only an optional afterthought, the way a speaker might pause. It is not the form to practise.
+An at-clause used as the object has no comma: Jeg ser at avviket er lite. Not "Jeg ser, at avviket er lite." Two object clauses joined by og have no comma between them either: Jeg ser at tallene stemmer og at avviket er lite.
 Put commas around an insertion or a non-restrictive relative: Rapporten, som er vedlagt, gjelder september.
 A restrictive som-clause has no comma before som. When that clause is part of the subject, the comma comes after the clause, before the main verb: Filen som ligger vedlagt, er ny.
 Put a comma between two main clauses joined by og, men, eller or for when the second clause has its own subject: Jeg skriver notatet, og hun sender det.
@@ -703,7 +703,7 @@ Lists of three do not take a comma before og: kostnader, inntekter og avvik.`,
         "Hvilken setning har riktig komma ved at?",
         ["Jeg ser at avviket er lite.", "Jeg ser, at avviket er lite.", "At avviket er lite er godt nytt.", "At, avviket er lite, er godt nytt."],
         "Jeg ser at avviket er lite.",
-        "An at-clause used as the object normally has no comma. A fronted at-clause takes the comma after the whole clause, not before at and not after at alone: At avviket er lite, er godt nytt. A subordinate clause of another kind that follows the main clause normally does take a comma.",
+        "An at-clause used as the object has no comma. A fronted at-clause takes the comma after the whole clause, not before at and not after at alone: At avviket er lite, er godt nytt. A subordinate clause that follows the main clause normally has no comma either.",
         "Which sentence has the right comma with at?",
       ),
       fix(

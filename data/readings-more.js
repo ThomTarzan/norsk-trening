@@ -453,7 +453,7 @@ export const moreReadings = [
     voice: "nb-NO-PernilleNeural",
     dictation: [
       "«Kortet ble avvist i dag», sier hun.",
-      "Det nye kortet kommer i posten om tre til fem dager.",
+      "De sperrer det gamle kortet.",
       "«Da ringer du oss», sier rådgiveren.",
     ],
     paragraphs: [
@@ -465,13 +465,13 @@ export const moreReadings = [
       [
         "Når det er hennes tur, forklarer hun problemet.",
         "«Kortet ble avvist i dag», sier hun.",
-        "Kundenrådgiveren ber om legitimasjon og spør om hun har BankID.",
+        "Kunderådgiveren ber om legitimasjon og spør om hun har BankID.",
         "Det har hun.",
       ],
       [
-        "De sperrer det gamle kortet og bestiller et nytt.",
-        "Det nye kortet kommer i posten om tre til fem dager.",
-        "Inntil da kan hun betale med telefonen, hvis hun legger kortet inn der.",
+        "Rådgiveren ser at det gamle kortet fortsatt er aktivt, og at det stopper det nye.",
+        "De sperrer det gamle kortet.",
+        "Deretter aktiverer hun det nye kortet i appen, så hun kan betale med det.",
         "Rådgiveren viser henne hvor i appen hun gjør det.",
       ],
       [
@@ -493,10 +493,10 @@ export const moreReadings = [
       rq(
         "les-b1-06-q2",
         "prepositions",
-        "Når kommer det nye kortet?",
-        ["I posten om tre til fem dager.", "Samme kveld på kontoret.", "Etter neste lønn.", "Det kommer ikke."],
-        "I posten om tre til fem dager.",
-        "They block the old card and order a new one. Until it arrives she can pay with the phone.",
+        "Hva gjør banken med det gamle kortet?",
+        ["De sperrer det.", "De sender det i posten.", "De kaster legitimasjonen.", "De lar det være aktivt."],
+        "De sperrer det.",
+        "The old card is still active and blocks the new one. They block the old card, and she activates the new card in the app.",
       ),
       rq(
         "les-b1-06-q3",
@@ -646,18 +646,18 @@ export const moreReadings = [
     audio: "audio/les-b2-03.mp3",
     voice: "nb-NO-FinnNeural",
     dictation: [
-      "Tsvitana får et brev fra Skatteetaten i posten.",
+      "Tsvitana får et varsel fra Skatteetaten i Altinn.",
       "Fristen er 30. april.",
       "Tsvitana henter årsoppgaven, retter renten og leverer.",
     ],
     paragraphs: [
       [
-        "Tsvitana får et brev fra Skatteetaten i posten.",
+        "Tsvitana får et varsel fra Skatteetaten i Altinn.",
         "Emnet er skattemeldingen for i fjor.",
         "Hun åpner det med en gang, så det ikke blir liggende.",
       ],
       [
-        "I brevet står det at hun skal sjekke tallene og godkjenne meldingen innen fristen.",
+        "I varslet står det at hun skal sjekke tallene og levere skattemeldingen innen fristen.",
         "Fristen er 30. april.",
         "Noen tall er forhåndsutfylt, men hun må se om lønnen og rentene stemmer.",
         "Hvis noe er feil, skal hun endre det før hun leverer.",
@@ -680,9 +680,9 @@ export const moreReadings = [
         "les-b2-03-q1",
         "register",
         "Hva skal hun gjøre med skattemeldingen?",
-        ["Sjekke tallene og godkjenne den innen fristen.", "Betale hele skatten i skranken i dag.", "Kaste brevet.", "Vente til neste år."],
-        "Sjekke tallene og godkjenne den innen fristen.",
-        "The deadline is 30 April. Some figures are prefilled, and she must correct anything that is wrong before she submits.",
+        ["Sjekke tallene og levere den innen fristen.", "Betale hele skatten i skranken i dag.", "Kaste varslet.", "Vente til neste år."],
+        "Sjekke tallene og levere den innen fristen.",
+        "The notice arrives in Altinn, not as a paper letter. The deadline is 30 April. She checks the figures and leverer skattemeldingen.",
       ),
       rq(
         "les-b2-03-q2",
@@ -786,7 +786,7 @@ export const moreReadings = [
         "De setter seg ved kjøkkenbordet og leser ett avsnitt om gangen.",
       ],
       [
-        "NAV skriver at de mangler en inntektsopplysning fra arbeidsgiver.",
+        "NAV skriver at de mangler en inntektsmelding fra arbeidsgiver.",
         "Uten den kan de ikke ferdigbehandle saken.",
         "Fristen er om to uker, og opplysningen skal sendes inn digitalt.",
         "I brevet står det også at vedtaket ikke er fattet ennå, så beløpet er ikke endelig.",
@@ -794,13 +794,13 @@ export const moreReadings = [
       [
         "Tsvitana forklarer forskjellen.",
         "En forespørsel er ikke et avslag.",
-        "Venninnen skal be arbeidsgiver sende opplysningen, og hun skal selv sjekke at den er kommet inn før fristen.",
+        "Venninnen skal be arbeidsgiver sende inntektsmeldingen, og hun skal selv sjekke at den er kommet inn før fristen.",
         "Hvis arbeidsgiver er sen, bør hun kontakte NAV før fristen går ut, ikke etterpå.",
       ],
       [
         "De skriver et kort utkast sammen.",
         "«Jeg viser til brevet deres», begynner det.",
-        "«Arbeidsgiver sender inntektsopplysningen denne uken.»",
+        "«Arbeidsgiver sender inntektsmeldingen denne uken.»",
         "«Gi beskjed hvis dere trenger noe mer fra meg.»",
         "Språket er nøkternt.",
         "De lover ikke et beløp, og de skriver ikke mer om diagnosen enn brevet ber om.",
@@ -811,9 +811,9 @@ export const moreReadings = [
         "les-c1-03-q1",
         "register",
         "Hva mangler NAV?",
-        ["En inntektsopplysning fra arbeidsgiver.", "En diagnose i detalj.", "Et nytt vedtak fra legen i dag.", "Husleien."],
-        "En inntektsopplysning fra arbeidsgiver.",
-        "Without the employer's income information, NAV cannot finish the case. The decision has not been made, so the amount is not final.",
+        ["En inntektsmelding fra arbeidsgiver.", "En diagnose i detalj.", "Et nytt vedtak fra legen i dag.", "Husleien."],
+        "En inntektsmelding fra arbeidsgiver.",
+        "NAV asks for an inntektsmelding from the employer, not a free-text note. Without it they cannot finish the case. The decision has not been made, so the amount is not final.",
       ),
       rq(
         "les-c1-03-q2",
@@ -827,7 +827,7 @@ export const moreReadings = [
         "les-c1-03-q3",
         "register",
         "Hva lover utkastet ikke?",
-        ["Et bestemt beløp.", "At arbeidsgiver sender opplysningen.", "At de viser til brevet.", "At NAV kan svare hvis de trenger mer."],
+        ["Et bestemt beløp.", "At arbeidsgiver sender inntektsmeldingen.", "At de viser til brevet.", "At NAV kan svare hvis de trenger mer."],
         "Et bestemt beløp.",
         "The draft is restrained. It does not promise a sum, and it does not add more about the diagnosis than the letter asks for.",
       ),

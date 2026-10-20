@@ -27,7 +27,7 @@ export const placement = {
         "Velg riktig frase.",
         ["et nytt budsjett", "et ny budsjett", "et nye budsjett", "en nytt budsjett"],
         "et nytt budsjett",
-        "Budsjett is neuter, so ny becomes nytt. Viktig would not add -t, but the noun in that option is møte, and the option is only a distractor.",
+        "Budsjett is neuter, so ny becomes nytt. Adjectives in -ig, such as viktig, do not add -t, but that is a different word.",
       ),
     ),
     item(
@@ -136,7 +136,7 @@ export const placement = {
         "Hvilken setning har riktig komma?",
         ["Når tallene er klare, sender jeg dem.", "Jeg ser, at avviket er lite.", "Jeg skriver, og sender notatet.", "Kostnader, inntekter, og avvik."],
         "Når tallene er klare, sender jeg dem.",
-        "Comma after a fronted subordinate clause. A subordinate clause after the main clause normally takes a comma, but an at-clause used as the object does not. None when the subject is shared, and no comma before og in a list.",
+        "Comma after a fronted subordinate clause. A subordinate clause after the main clause normally has no comma, and an at-clause used as the object has none either. No comma when the subject is shared, and no comma before og in a list.",
       ),
     ),
     item(

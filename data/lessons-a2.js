@@ -196,7 +196,7 @@ Both are correct. Ikke does not take the second slot. The verb does.
 
 With an auxiliary, the finite verb is the auxiliary. Ikke comes after it, and before the participle or infinitive: Jeg har ikke sendt rapporten. Jeg kan ikke komme. Not "jeg ikke har sendt" in a main clause, and not "jeg har sendt ikke".
 
-Aldri, alltid and ofte are sentence adverbs in the same position when they comment on the whole clause: Jeg sender aldri rapporten på søndag. You will later see that subordinate clauses move these adverbs. This lesson is only about main clauses.`,
+Aldri, alltid and ofte are sentence adverbs in the same position when they comment on the whole clause: Jeg sender aldri rapporten på søndager. You will later see that subordinate clauses move these adverbs. This lesson is only about main clauses.`,
     examples: [
       { no: "Jeg sender ikke rapporten i dag.", en: "I am not sending the report today." },
       { no: "I dag har jeg ikke tid.", en: "Today I do not have time." },
@@ -285,7 +285,7 @@ Masculine and feminine singular have no extra ending: en ny rapport, ei ny uke.
 Neuter singular usually adds -t: et nytt budsjett, et stort møte. Ny doubles the consonant: nytt. Stor becomes stort.
 Plural, for all genders, adds -e: nye rapporter, store møter, nye budsjett.
 
-Some adjectives do not add -t. Those ending in -ig, -lig or -sk stay unchanged in the neuter: et viktig møte, et norsk ord, not "viktigt" and not "norskt". Adjectives that already end in -e, such as moderne, do not add another ending: et moderne system, moderne systemer.
+Some adjectives do not add -t. Those ending in -ig or -lig stay unchanged in the neuter: et viktig møte, not "viktigt". The same is true of -isk and of nationality adjectives in -sk: et norsk ord, not "norskt". Other adjectives in -sk do take -t: et friskt eple, et ferskt brød. Adjectives that already end in -e, such as moderne, do not add another ending: et moderne system, moderne systemer.
 
 Liten is irregular: en liten feil, et lite avvik, små feil. You only need to recognise it here. The definite adjective ending -e comes in a B1 lesson.`,
     examples: [
@@ -347,9 +347,9 @@ Liten is irregular: en liten feil, et lite avvik, små feil. You only need to re
       mc(
         "adjectives",
         "Hvilken setning er riktig?",
-        ["Det er små feil i rapporten.", "Det er lite feil i rapporten.", "Det er smått feil i rapporten.", "Det er liten feil i rapportene er."],
+        ["Det er små feil i rapporten.", "Det er smått feil i rapporten.", "Det er liten feilene i rapporten.", "Det er feil små i rapporten."],
         "Det er små feil i rapporten.",
-        "Feil is plural here (“errors”), and the plural of liten is små. Lite is neuter singular.",
+        "Feil is plural here (“errors”), and the plural of liten is små. «Det er lite feil i rapporten» is also acceptable Norwegian when you mean that not much is wrong, so it is not used as a distractor.",
       ),
       fix(
         "adjectives",
@@ -375,7 +375,7 @@ På is used with many workplaces, institutions, events and islands: på kontoret
 
 Til marks a destination: reise til Oslo, gå til kontoret, sende rapporten til lederen. It is the direction, not the place where you already are. Jeg bor i Oslo, but Jeg reiser til Oslo.
 
-Some combinations are fixed and must be learned as phrases: i dag, i morgen, i går, på fredag, på norsk, på kontoret. På fredag means on Friday. I fredag is wrong.`,
+Some combinations are fixed and must be learned as phrases: i dag, i morgen, i går, på fredag, på norsk, på kontoret. På fredag means the coming Friday, or Friday in a schedule you are pointing at. I fredag means last Friday. Both are correct; they are not the same day.`,
     examples: [
       { no: "Jeg bor i Oslo og jobber på kontoret.", en: "I live in Oslo and work at the office." },
       { no: "Vi er på møtet i ti minutter.", en: "We are in the meeting for ten minutes." },
@@ -414,9 +414,9 @@ Some combinations are fixed and must be learned as phrases: i dag, i morgen, i g
       mc(
         "prepositions",
         "Hvilken setning er riktig?",
-        ["Møtet er på fredag.", "Møtet er i fredag.", "Møtet er til fredag.", "Møtet er om fredag."],
+        ["Møtet er på fredag.", "Møtet er hos fredag.", "Møtet er til fredag.", "Møtet er om fredag."],
         "Møtet er på fredag.",
-        "Weekdays take på: på fredag. I dag and i morgen are the exceptions among time words, because they are fixed phrases.",
+        "A coming Friday takes på: på fredag. I fredag is also correct Norwegian, but it means last Friday, so it is not a wrong preposition and it is not used as a distractor here. I dag and i morgen are fixed phrases.",
       ),
       order(
         "prepositions",
@@ -461,7 +461,15 @@ Some combinations are fixed and must be learned as phrases: i dag, i morgen, i g
     husk: "I går sendte jeg rapporten. Jeg bodde, jeg skrev, jeg var.",
     intro: `Preteritum is the simple past. Use it for a finished event at a stated time, or a period that is over: I går sendte jeg rapporten. I 2016 bodde jeg i Oslo. The time can be implicit, but the event is presented as finished and placed in the past.
 
-Weak verbs usually take -et or -te. Snacke → snakket. Jobbe → jobbet. If the stem ends in a voiced consonant after a long vowel, the ending is often -te: bo → bodde (also a consonant change), sende → sendte, lede → ledet or ledte is rarer; you need sendte and bodde now.
+Weak verbs add a dental ending in the past. There are three useful groups.
+
+The largest group takes -et, and in speech often -a: snakke → snakket, jobbe → jobbet. The stem is the infinitive without a final unstressed -e.
+
+A second group takes -te, often when the stem ends in a voiceless consonant or has a short vowel: kjøpe → kjøpte, lese is strong, so do not build a weak form for it. Sende → sendte belongs here.
+
+A third group takes -de or -dde: leve → levde, prøve → prøvde, bo → bodde, ha → hadde. The extra d in bodde and hadde is part of that pattern, not a free choice.
+
+Lede → ledet or leda. Ledte is not the usual bokmål form. You need sendte and bodde now. Do not invent endings such as skrevde or gjørte.
 
 Strong and irregular verbs change the vowel, and there is no -et ending: skrive → skrev, være → var, ha → hadde, gjøre → gjorde, komme → kom, gå → gikk, si → sa. Present -r disappears. Do not say "skrevde" or "gikkete".
 
