@@ -664,17 +664,17 @@ Skulle ha vært ferdig means it was supposed to be finished. The participle of v
     titleEn: "Commas the reader needs",
     concepts: ["punctuation"],
     maal: "Du setter komma etter innledende leddsetning, rundt innskudd og mellom helsetninger.",
-    husk: "Når tallene er klare, sender jeg dem. Ingen komma foran at.",
-    intro: `These lessons follow one consistent comma practice, close to what Norwegian courses teach and to Språkrådet's main rules.
+    husk: "Når tallene er klare, sender jeg dem. Jeg ser at avviket er lite.",
+    intro: `These lessons follow standard bokmål comma practice, close to Språkrådet.
 
-Put a comma after a subordinate clause that stands first: Når tallene er klare, sender jeg dem.
+Put a comma after a subordinate clause that stands first: Når tallene er klare, sender jeg dem. The same comma closes a fronted at-clause: At avviket er lite, er godt nytt.
+The norm is also a comma when a subordinate clause follows the main clause: Jeg blir, fordi rapporten ikke er klar. Jeg skriver notatet, hvis tallene er klare.
+An at-clause used as the object is the exception and normally has no comma: Jeg ser at avviket er lite. Not "Jeg ser, at avviket er lite."
 Put commas around an insertion or a non-restrictive relative: Rapporten, som er vedlagt, gjelder september.
+A restrictive som-clause has no comma before som. When that clause is part of the subject, the comma comes after the clause, before the main verb: Filen som ligger vedlagt, er ny.
 Put a comma between two main clauses joined by og, men, eller or for when the second clause has its own subject: Jeg skriver notatet, og hun sender det.
 Do not put a comma before og when the subject is shared and omitted: Jeg skriver og sender notatet.
-Do not put a comma before a necessary at-clause or a restrictive som-clause that follows the main verb: Jeg ser at avviket er lite. Filen som ligger vedlagt, er ny.
-
-When the subject itself contains a subordinate clause, keep the comma before the main verb: Tallene som kom i går, stemmer. That comma closes the clause. It is not a comma between subject and verb in a simple sentence. In a simple sentence there is no comma: Tallene stemmer.
-
+In a simple sentence there is no comma between subject and verb: Tallene stemmer.
 Lists of three do not take a comma before og: kostnader, inntekter og avvik.`,
     examples: [
       { no: "Når tallene er klare, sender jeg dem.", en: "When the figures are ready, I will send them." },
@@ -700,11 +700,11 @@ Lists of three do not take a comma before og: kostnader, inntekter og avvik.`,
       ),
       mc(
         "punctuation",
-        "Hvilken setning skal ikke ha komma foran at?",
-        ["Jeg ser at avviket er lite.", "Jeg ser, at avviket er lite.", "At avviket er lite, er godt nytt.", "Avviket, som er lite, er forklart."],
+        "Hvilken setning har riktig komma ved at?",
+        ["Jeg ser at avviket er lite.", "Jeg ser, at avviket er lite.", "At avviket er lite er godt nytt.", "At, avviket er lite, er godt nytt."],
         "Jeg ser at avviket er lite.",
-        "A necessary at-clause at the end has no comma in front of at. The third sentence correctly has a comma because the at-clause is the fronted subject. The fourth is a non-restrictive insertion.",
-        "Which sentence should have no comma before at?",
+        "An at-clause used as the object normally has no comma. A fronted at-clause takes the comma after the whole clause, not before at and not after at alone: At avviket er lite, er godt nytt. A subordinate clause of another kind that follows the main clause normally does take a comma.",
+        "Which sentence has the right comma with at?",
       ),
       fix(
         "punctuation",

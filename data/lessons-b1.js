@@ -661,14 +661,16 @@ First, if the subordinate clause stands in front, the whole clause is the first 
 
 Second, ikke wants a different place inside the subordinate clause. You will drill that next, at B2. For now, notice the contrast: Jeg kommer ikke (main) and Hun sier at hun ikke kommer (subordinate). Do not invert inside the subordinate clause. The subject stays before the verb there: at hun ikke kommer, not "at kommer hun ikke".
 
-Når is used for the future and for repeated times. Da is used for a single event in the past. Når jeg sender rapporten, legger jeg ved tallene. Da møtet startet, manglet ett bilag. Hvis and dersom set a condition. Dersom is a little more formal and fits memos. At introduces what someone says, thinks or writes: Jeg ser at avviket er lite. No comma before that at.`,
+Når is used for the future and for repeated times. Da is used for a single event in the past. Når jeg sender rapporten, legger jeg ved tallene. Da møtet startet, manglet ett bilag. Hvis and dersom set a condition. Dersom is a little more formal and fits memos.
+
+Comma: a subordinate clause that stands first always takes a comma after it. A subordinate clause that follows the main clause normally takes a comma too: Jeg blir, fordi rapporten ikke er klar. An at-clause used as the object is the exception and normally has no comma: Jeg ser at avviket er lite.`,
     examples: [
       { no: "Jeg ser at avviket er lite.", en: "I see that the variance is small." },
       { no: "Fordi tallene manglet, utsatte vi møtet.", en: "Because the figures were missing, we postponed the meeting." },
       { no: "Når jeg sender rapporten, legger jeg ved prognosen.", en: "When I send the report, I attach the forecast." },
     ],
     vocab: [
-      ["fordi", "because", "Jeg blir fordi rapporten ikke er klar.", "I am staying because the report is not ready.", "subjunction"],
+      ["fordi", "because", "Jeg blir, fordi rapporten ikke er klar.", "I am staying, because the report is not ready.", "subjunction"],
       ["hvis", "if", "Hvis du vil, kan vi ta det på norsk.", "If you want, we can do it in Norwegian.", "subjunction"],
       ["dersom", "if (more formal)", "Dersom fristen ryker, varsler jeg.", "If the deadline is missed, I will give notice.", "subjunction"],
       ["når", "when (future or repeated)", "Når tallene er klare, sender jeg dem.", "When the figures are ready, I will send them.", "subjunction"],
@@ -690,7 +692,7 @@ Når is used for the future and for repeated times. Da is used for a single even
         "Hvilken setning er riktig?",
         ["Jeg ser at avviket er lite.", "Jeg ser, at avviket er lite.", "Jeg ser at er avviket lite.", "Jeg ser at avviket lite er."],
         "Jeg ser at avviket er lite.",
-        "No comma before a necessary at-clause. Inside it, the subject comes before the verb. There is no inversion.",
+        "An at-clause used as the object normally has no comma. Inside it, the subject comes before the verb. There is no inversion.",
       ),
       mc(
         "conjunctions",
@@ -733,8 +735,8 @@ Når is used for the future and for repeated times. Da is used for a single even
         "conjunctions",
         "Skriv setningen riktig.",
         "Jeg blir fordi at rapporten ikke er klar.",
-        ["Jeg blir fordi rapporten ikke er klar"],
-        "Fordi already subordinates the clause. Do not add at after it. Ikke stays before the verb inside the subordinate clause.",
+        ["Jeg blir, fordi rapporten ikke er klar"],
+        "Fordi already subordinates the clause. Do not add at after it. A fordi-clause that follows the main clause normally takes a comma. Ikke stays before the verb inside the subordinate clause.",
       ),
     ],
   }),

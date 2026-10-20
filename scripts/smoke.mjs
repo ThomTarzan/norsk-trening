@@ -8,6 +8,9 @@ const chrome = spawn(
     "--disable-gpu",
     "--user-data-dir=/tmp/chrome-norsk-profile",
     "--remote-debugging-port=9222",
+    "--use-fake-ui-for-media-stream",
+    "--use-fake-device-for-media-stream",
+    "--autoplay-policy=no-user-gesture-required",
     "about:blank",
   ],
   { stdio: "ignore" },
@@ -148,13 +151,79 @@ try {
   if (!job) throw new Error("Job track missing");
 
   await send("Page.navigate", { url: "http://127.0.0.1:8765/#/lesing/les-b2-01" });
-  await wait(400);
+  await wait(500);
   const reading = await evaluate("document.querySelector('h1')?.textContent");
   if (reading !== "Status til ledelsen") throw new Error(`Reading title: ${reading}`);
-  const audio = await evaluate("document.querySelector('audio')?.getAttribute('src')");
+  const audio = await evaluate("document.querySelector('[data-action=toggle-full]')?.dataset.src");
   if (audio !== "audio/les-b2-01.mp3") throw new Error(`Reading audio: ${audio}`);
-  await evaluate("document.querySelector('[data-action=start-reading]').click()");
+  const nativeControls = await evaluate("!!document.querySelector('audio[controls]')");
+  if (nativeControls) throw new Error("Native audio controls are visible");
+  const errorHidden = await evaluate("document.querySelector('[data-audio-error]')?.hidden === true");
+  if (!errorHidden) throw new Error("Audio error was visible before playback");
+  let duration = "";
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    duration = await evaluate("document.querySelector('[data-duration-for]')?.textContent || ''");
+    if (/^\d+:\d\d \/ \d+:\d\d$/.test(duration) && duration !== "0:00 / 0:00") break;
+    await wait(200);
+  }
+  if (!/^\d+:\d\d \/ \d+:\d\d$/.test(duration) || duration === "0:00 / 0:00") {
+    throw new Error(`Duration did not preload: ${duration}`);
+  }
+  await evaluate("document.querySelector('[data-action=toggle-full]').click()");
+  await wait(700);
+  const played = await evaluate(`(() => {
+    const engine = document.querySelector('[data-player=engine]');
+    const pressed = document.querySelector('[data-action=toggle-full]')?.getAttribute('aria-pressed');
+    return { current: engine?.currentTime || 0, paused: engine?.paused, rate: engine?.playbackRate, pressed, error: document.querySelector('[data-audio-error]')?.hidden };
+  })()`);
+  if (!(played.current > 0) || played.paused || played.pressed !== "true") {
+    throw new Error(`Full text did not play: ${JSON.stringify(played)}`);
+  }
+  if (played.rate !== 1) throw new Error(`Playback rate changed: ${played.rate}`);
+  if (played.error !== true) throw new Error("Audio error appeared during playback");
+  const speedControl = await evaluate("document.body.innerText.includes('Hastighet') || !!document.querySelector('[data-rate]')");
+  if (speedControl) throw new Error("Playback speed control is present");
+  await evaluate("document.querySelector('[data-action=play-src]').click()");
+  await wait(400);
+  const sentencePlayed = await evaluate("document.querySelector('[data-player=engine]')?.currentTime > 0");
+  if (!sentencePlayed) throw new Error("Sentence audio did not play");
+  await evaluate("document.querySelector('[data-action=record-sentence]').click()");
+  await wait(600);
+  const recording = await evaluate("document.querySelector('[data-action=record-sentence]')?.getAttribute('aria-pressed')");
+  if (recording !== "true") throw new Error(`Recording did not start: ${recording}`);
+  await evaluate("document.querySelector('[data-action=record-sentence]').click()");
+  await wait(400);
+  const compare = await evaluate("!!document.querySelector('[data-action=compare-take]')");
+  if (!compare) throw new Error("Compare button missing after recording");
+  await evaluate("document.querySelector('[data-action=start-dictation]').click()");
+  await wait(300);
+  const dictTitle = await evaluate("document.querySelector('h1')?.textContent");
+  if (dictTitle !== "Skriv det du hører") throw new Error(`Dictation title: ${dictTitle}`);
+  const hiddenLine = await evaluate("document.body.innerText.includes('Setningen var')");
+  if (hiddenLine) throw new Error("Dictation revealed the sentence before checking");
+  await evaluate(`(() => {
+    const box = document.querySelector('[data-draft]');
+    box.value = 'helt feil setning';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('[data-action=submit-dict]').click();
+  })()`);
   await wait(250);
+  const diff = await evaluate("!!document.querySelector('.diff mark.miss') && document.body.innerText.includes('Setningen var')");
+  if (!diff) throw new Error("Dictation diff missing");
+  for (let step = 0; step < 3; step += 1) {
+    const hasNext = await evaluate("!!document.querySelector('[data-action=next-dict]')");
+    if (!hasNext) {
+      await evaluate(`(() => {
+        const box = document.querySelector('[data-draft]');
+        box.value = 'x';
+        box.dispatchEvent(new Event('input', { bubbles: true }));
+        document.querySelector('[data-action=submit-dict]').click();
+      })()`);
+      await wait(150);
+    }
+    await evaluate("document.querySelector('[data-action=next-dict]').click()");
+    await wait(180);
+  }
   const asked = await evaluate("document.querySelector('h1')?.textContent");
   if (!asked?.includes("skyldes")) throw new Error(`Reading question: ${asked}`);
 
@@ -171,16 +240,81 @@ try {
   const choices = await evaluate("document.querySelectorAll('.option, .chip').length");
   if (choices < 2) throw new Error(`Expected choices, found ${choices}`);
 
+  await send("Page.navigate", { url: "http://127.0.0.1:8765/#/leksjon/a2-01" });
+  await wait(300);
+  await evaluate("document.querySelector('[data-action=open-lesson]').click()");
+  await wait(200);
+  const intro = await evaluate("document.querySelector('h1')?.textContent");
+  if (intro !== "V2-regelen") throw new Error(`Intro heading: ${intro}`);
+  await send("Page.reload", { ignoreCache: true });
+  await wait(500);
+  const introAgain = await evaluate("document.querySelector('h1')?.textContent");
+  if (introAgain !== "V2-regelen") throw new Error(`Reload left the intro: ${introAgain}`);
+  await evaluate("document.querySelector('[data-phase=words]').click()");
+  await wait(150);
+  await send("Page.reload", { ignoreCache: true });
+  await wait(500);
+  const wordsHeading = await evaluate("document.querySelector('h1')?.textContent");
+  if (wordsHeading !== "Nye ord") throw new Error(`Reload skipped vocabulary: ${wordsHeading}`);
+  await evaluate("document.querySelector('[data-phase=quiz]').click()");
+  await wait(200);
+  await evaluate("document.querySelector('.option').click(); document.querySelector('[data-action=submit]').click()");
+  await wait(150);
+  await evaluate("document.querySelector('[data-action=next]').click()");
+  await wait(200);
+  const exerciseTwo = await evaluate("document.querySelector('.kicker')?.textContent || ''");
+  if (!exerciseTwo.includes("Øvelse 2")) throw new Error(`Expected exercise 2, got ${exerciseTwo}`);
+  const hintBefore = await evaluate("document.body.innerText.includes('Trykk på ordene i riktig rekkefølge.')");
+  if (!hintBefore) throw new Error("Order hint missing");
+  await evaluate("document.querySelector('[data-action=pick]').click()");
+  await wait(150);
+  const hintAfter = await evaluate("document.body.innerText.includes('Trykk på ordene i riktig rekkefølge.')");
+  if (!hintAfter) throw new Error("Order hint disappeared after the first tap");
+  await send("Page.reload", { ignoreCache: true });
+  await wait(500);
+  const exerciseTwoAgain = await evaluate("document.querySelector('.kicker')?.textContent || ''");
+  if (!exerciseTwoAgain.includes("Øvelse 2")) throw new Error(`Reload jumped away from exercise 2: ${exerciseTwoAgain}`);
+
+  await send("Page.navigate", { url: "http://127.0.0.1:8765/#/fremgang" });
+  await wait(400);
+  await evaluate("document.querySelector('[data-action=practice-concept]').click()");
+  await wait(700);
+  const practice = await evaluate(`(() => ({
+    hash: location.hash,
+    h1: document.querySelector('h1')?.textContent || '',
+    kicker: document.querySelector('.kicker')?.textContent || '',
+    buttons: document.querySelectorAll('[data-action=practice-concept]').length,
+  }))()`);
+  if (practice.hash !== "#/ovelse" || !/Øvelse 1/.test(`${practice.kicker} ${practice.h1}`)) {
+    throw new Error(`Concept topic did not start practice: ${JSON.stringify(practice)}`);
+  }
+
   await send("Page.navigate", { url: "http://127.0.0.1:8765/#/ord" });
   await wait(400);
   const words = await evaluate("document.querySelectorAll('.word').length");
   if (words < 10) throw new Error(`Vocab list too short: ${words}`);
+  await evaluate(`(() => {
+    const search = document.querySelector('#vocab-search');
+    search.value = 'uke';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+  await wait(200);
+  const merged = await evaluate(`(() => {
+    const heads = [...document.querySelectorAll('.word .no')].map((node) => node.textContent);
+    const play = [...document.querySelectorAll('[data-action=play-src]')].some((button) => (button.dataset.src || '').includes('audio/ord/'));
+    return heads.includes('ei/en uke') && !heads.includes('ei uke') && !heads.includes('en uke') && play;
+  })()`);
+  if (!merged) throw new Error("Ordbank did not merge ei/en uke or is missing audio");
+  await evaluate("document.querySelector('[data-action=play-src]').click()");
+  await wait(400);
+  const wordPlayed = await evaluate("document.querySelector('[data-player=engine]')?.paused === false");
+  if (!wordPlayed) throw new Error("Vocab audio did not play");
 
   if (problems.length) {
     console.error(problems.join("\n"));
     process.exitCode = 1;
   } else {
-    console.log("Smoke OK: login, welcome, dashboard, placement, lesson, reading, job track, vocab. No console errors.");
+    console.log("Smoke OK: login, lessons, readings, dictation, recording, ordbank, concept practice. No console errors.");
   }
 } catch (error) {
   console.error(error);

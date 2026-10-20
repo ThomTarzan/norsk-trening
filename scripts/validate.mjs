@@ -1,8 +1,11 @@
 import { existsSync, statSync } from "node:fs";
-import { checkExercise } from "../js/check.js";
+import { checkExercise, gradeDictation } from "../js/check.js";
 import { buildReview, masteryOf, recommendLesson, suggestLevel } from "../js/adapt.js";
 import { freshState } from "../js/storage.js";
 import { shuffleBank, shuffleOptions } from "../js/util.js";
+import { groupVocab } from "../js/vocab-groups.js";
+import { vocabAudio } from "../data/vocab-audio.js";
+import { sentencesOf } from "../data/readings.js";
 import {
   LEVELS,
   allVocab,
@@ -146,7 +149,7 @@ if ([...types].some((type) => type !== "mc" && type !== "order")) {
   fail(`Only mc and order are allowed, found ${[...types].join(", ")}`);
 }
 
-if (readings.length < 6) fail(`Expected at least 6 readings, found ${readings.length}`);
+if (readings.length < 20) fail(`Expected at least 20 readings, found ${readings.length}`);
 const readingIds = new Set();
 for (const reading of readings) {
   if (readingIds.has(reading.id)) fail(`Duplicate reading id ${reading.id}`);
@@ -154,18 +157,41 @@ for (const reading of readings) {
   if (!levels.has(reading.level)) fail(`${reading.id} has bad level`);
   nonEmpty(reading.title, `${reading.id} title`);
   nonEmpty(reading.audio, `${reading.id} audio`);
+  if (!String(reading.voice || "").endsWith("Neural")) fail(`${reading.id} needs a neural nb-NO voice`);
   if (!reading.audio.endsWith(".mp3")) fail(`${reading.id} audio must be an mp3`);
   if (!existsSync(reading.audio)) fail(`${reading.id} missing audio file ${reading.audio}`);
   else if (statSync(reading.audio).size < 8000) fail(`${reading.id} audio file is too small`);
-  const text = reading.text.join(" ");
-  if (text.split(/\s+/).length < 75) fail(`${reading.id} text is too short`);
+  if (!Array.isArray(reading.paragraphs) || !reading.paragraphs.length) fail(`${reading.id} needs paragraphs`);
+  const sentences = sentencesOf(reading);
+  if (sentences.length < 3) fail(`${reading.id} needs sentences`);
+  for (const sentence of sentences) {
+    if (!existsSync(sentence.audio)) fail(`${reading.id} missing sentence audio ${sentence.audio}`);
+    else if (statSync(sentence.audio).size < 700) fail(`${sentence.audio} is too small`);
+  }
+  const text = sentences.map((sentence) => sentence.text).join(" ");
+  if (text.split(/\s+/).filter(Boolean).length < 75) fail(`${reading.id} text is too short`);
   if (!/[æøåÆØÅ]/.test(text)) fail(`${reading.id} text has no Norwegian letters`);
+  if (!Array.isArray(reading.dictation) || reading.dictation.length < 3) fail(`${reading.id} needs at least 3 dictation sentences`);
+  for (const line of reading.dictation || []) {
+    if (!sentences.some((sentence) => sentence.text === line)) fail(`${reading.id} dictation line is not a sentence: ${line}`);
+  }
   if (!Array.isArray(reading.questions) || reading.questions.length < 3) fail(`${reading.id} needs at least 3 questions`);
   for (const exercise of reading.questions) {
     checkExerciseShape(exercise, reading.id);
     if (exercise.type !== "mc") fail(`${exercise.id} reading questions must be multiple choice`);
   }
 }
+
+const ordbank = groupVocab(allVocab());
+if (!ordbank.some((group) => group.display === "ei/en uke")) fail("Expected ei uke and en uke to merge as ei/en uke");
+if (ordbank.some((group) => group.display === "ei uke" || group.display === "en uke")) fail("ei uke / en uke should not stay as separate ordbank rows");
+for (const group of ordbank) {
+  const path = vocabAudio[group.ids[0]];
+  if (!path) fail(`Missing vocab audio for ${group.display}`);
+  else if (!existsSync(path) || statSync(path).size < 400) fail(`Vocab audio missing or short: ${group.display}`);
+}
+if (!gradeDictation("Hei, Kari!", "hei kari").ok) fail("Dictation should ignore case and punctuation");
+if (gradeDictation("Hei, Kari!", "hei nora").ok) fail("Dictation accepted a wrong word");
 
 const sample = lessons[0].exercises.find((exercise) => exercise.type === "mc");
 if (!checkExercise(sample, sample.answer).ok) fail("checkExercise failed on a known answer");

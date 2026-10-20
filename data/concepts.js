@@ -138,7 +138,7 @@ export const concepts = [
     name: "Komma og tegnsetting",
     nameEn: "Comma and punctuation",
     stage: "Presisjon",
-    blurb: "Komma etter innledende leddsetning, rundt innskudd og mellom helsetninger.",
+    blurb: "Komma etter innledende leddsetning. Leddsetning etter helsetning har normalt komma, men at-setning som objekt har det ikke.",
   },
 ];
 

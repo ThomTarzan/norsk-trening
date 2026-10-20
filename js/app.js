@@ -12,7 +12,7 @@ import {
   vocabMap,
 } from "../data/catalog.js";
 import { buildReview, conceptMastery, dueCount, jobSuggestion, recommendLesson, suggestLevel } from "./adapt.js";
-import { checkExercise } from "./check.js";
+import { checkExercise, gradeDictation } from "./check.js";
 import { emptyCard, schedule } from "./srs.js";
 import {
   exportPayload,
@@ -24,6 +24,9 @@ import {
   saveState,
 } from "./storage.js";
 import { esc, formatWhen, greeting, localISO, paragraphs, shuffle, shuffleBank, shuffleOptions } from "./util.js";
+import { sentencesOf } from "../data/readings.js";
+import { vocabAudio } from "../data/vocab-audio.js";
+import { groupVocab } from "./vocab-groups.js";
 
 const AUTH_KEY = "norsk-hver-dag-auth";
 const PAGE_PASSWORD = "Tsvitana";
@@ -52,6 +55,9 @@ function blankMem() {
     query: "",
     theme: "alle",
     hideText: false,
+    takes: {},
+    recordingKey: "",
+    micNote: "",
   };
 }
 
@@ -66,7 +72,37 @@ function resetAnswer() {
 }
 
 function save() {
+  const session = state.session;
+  if (session?.kind === "lesson" && !session.finalized) {
+    const previous = state.lessons[session.lessonId] || {};
+    state.lessons[session.lessonId] = {
+      ...previous,
+      started: true,
+      cursor: {
+        phase: session.phase,
+        index: session.index || 0,
+        answers: session.answers || [],
+        vocabAdded: Boolean(session.vocabAdded),
+      },
+    };
+  }
   saveState(state);
+}
+
+function lessonFromCursor(id) {
+  const record = state.lessons[id];
+  const cursor = record?.cursor;
+  if (!cursor || record?.completed) return null;
+  const phase = ["intro", "words", "quiz"].includes(cursor.phase) ? cursor.phase : "intro";
+  return {
+    kind: "lesson",
+    lessonId: id,
+    phase,
+    index: phase === "quiz" ? Number(cursor.index) || 0 : 0,
+    answers: Array.isArray(cursor.answers) ? cursor.answers : [],
+    finalized: false,
+    vocabAdded: Boolean(cursor.vocabAdded) || phase === "quiz",
+  };
 }
 
 function route() {
@@ -120,8 +156,20 @@ function startLesson(id, fresh = false) {
   ensureProfile(lesson.level === "C2" ? "C1" : lesson.level);
   const existing = state.session;
   const resume = !fresh && existing?.kind === "lesson" && existing.lessonId === id && !existing.finalized;
-  if (!resume) {
+  if (fresh) {
+    state.lessons[id] = { ...(state.lessons[id] || {}), cursor: null };
     state.session = {
+      kind: "lesson",
+      lessonId: id,
+      phase: "intro",
+      index: 0,
+      answers: [],
+      finalized: false,
+      vocabAdded: false,
+    };
+    resetAnswer();
+  } else if (!resume) {
+    state.session = lessonFromCursor(id) || {
       kind: "lesson",
       lessonId: id,
       phase: "intro",
@@ -208,6 +256,11 @@ function currentTask() {
   if (session.kind === "reading" && session.phase === "quiz") {
     const reading = readingsById.get(session.readingId);
     return { exercise: reading?.questions[session.index] || null, bucket: null, vocab: null };
+  }
+  if (session.kind === "concept" && session.phase === "quiz") {
+    const exerciseId = session.plan[session.index];
+    const exercise = lessons.flatMap((lesson) => lesson.exercises).find((entry) => entry.id === exerciseId);
+    return { exercise, vocab: null, bucket: null };
   }
   if (session.kind === "review" && session.phase === "quiz") {
     const item = session.plan[session.index];
@@ -348,6 +401,7 @@ function finishSession() {
       bestScore: Math.max(previous.bestScore || 0, score),
       times: (previous.times || 0) + 1,
       lastAt: new Date().toISOString(),
+      cursor: null,
     };
     markStudyDay(state);
   } else if (session.kind === "reading") {
@@ -360,7 +414,7 @@ function finishSession() {
       lastAt: new Date().toISOString(),
     };
     markStudyDay(state);
-  } else if (session.kind === "review" && total > 0) {
+  } else if ((session.kind === "review" || session.kind === "concept") && total > 0) {
     markStudyDay(state);
   }
   focusMode = "route";
@@ -447,12 +501,13 @@ function interactionHtml(exercise, options, chips) {
     <button class="btn" type="button" data-action="submit">Sjekk svar</button>`;
   }
   if (exercise.type === "order") {
-    return `<div class="answer-line" aria-live="polite">${
+    return `<p class="fine">Trykk på ordene i riktig rekkefølge.</p>
+    <div class="answer-line" aria-live="polite">${
       chips.chosen.length
         ? `<div class="chosen">${chips.chosen
             .map((chip) => `<button type="button" class="chip" data-action="unpick" data-key="${esc(chip.key)}">${esc(chip.word)}</button>`)
             .join("")}</div>`
-        : `<span class="muted">Trykk på ordene i riktig rekkefølge.</span>`
+        : `<span class="muted">Setningen bygges her.</span>`
     }</div>
     <div class="bank" aria-label="Ord å velge mellom">${chips.bank
       .map((chip) => `<button type="button" class="chip" data-action="pick" data-key="${esc(chip.key)}">${esc(chip.word)}</button>`)
@@ -607,11 +662,39 @@ function readingCard(reading) {
   </article>`;
 }
 
+function readingSession(id) {
+  const session = state.session;
+  if (session?.kind === "reading" && session.readingId === id && !session.finalized) return session;
+  return null;
+}
+
+function beginDictation(id) {
+  const reading = readingsById.get(id);
+  if (!reading) return;
+  ensureProfile(reading.level === "C2" ? "C1" : reading.level);
+  const same = readingSession(id);
+  state.session = {
+    kind: "reading",
+    readingId: id,
+    phase: "dict",
+    index: 0,
+    answers: same?.answers || [],
+    dictAnswers: [],
+    finalized: false,
+  };
+  resetAnswer();
+  haltAudio();
+  focusMode = "route";
+  save();
+  if (location.hash === `#/lesing/${id}`) render();
+  else go(`#/lesing/${id}`);
+}
+
 function beginReadingQuestions(id) {
   const reading = readingsById.get(id);
   if (!reading) return;
   ensureProfile(reading.level === "C2" ? "C1" : reading.level);
-  const same = state.session?.kind === "reading" && state.session.readingId === id && !state.session.finalized;
+  const same = readingSession(id);
   if (!same) {
     state.session = {
       kind: "reading",
@@ -619,17 +702,58 @@ function beginReadingQuestions(id) {
       phase: "quiz",
       index: 0,
       answers: [],
+      dictAnswers: [],
       finalized: false,
     };
-  } else {
-    state.session.phase = "quiz";
+  } else if (same.phase !== "quiz") {
+    same.phase = "quiz";
+    same.index = 0;
+    if (!Array.isArray(same.dictAnswers)) same.dictAnswers = [];
   }
   resetAnswer();
   mem.hideText = false;
+  haltAudio();
   focusMode = "route";
   save();
   if (location.hash === `#/lesing/${id}`) render();
   else go(`#/lesing/${id}`);
+}
+
+function submitDictation() {
+  const session = state.session;
+  if (!session || session.phase !== "dict" || mem.locked) return;
+  const reading = readingsById.get(session.readingId);
+  const expected = reading?.dictation?.[session.index];
+  if (!expected) return;
+  if (!String(mem.draft).trim()) {
+    mem.note = "Skriv det du hørte.";
+    render();
+    return;
+  }
+  const result = gradeDictation(expected, mem.draft);
+  if (!Array.isArray(session.dictAnswers)) session.dictAnswers = [];
+  session.dictAnswers[session.index] = { ok: result.ok, expected };
+  mem.locked = true;
+  mem.feedback = { ok: result.ok, expected, diff: result.diff };
+  focusMode = "feedback";
+  announce(result.ok ? "Riktig." : "Ikke helt.");
+  save();
+  render();
+}
+
+function nextDict() {
+  const session = state.session;
+  const reading = readingsById.get(session?.readingId);
+  if (!reading) return;
+  resetAnswer();
+  if (session.index + 1 < reading.dictation.length) {
+    session.index += 1;
+    focusMode = "route";
+    save();
+    render();
+    return;
+  }
+  beginReadingQuestions(reading.id);
 }
 
 function weakList() {
@@ -723,7 +847,7 @@ function conceptMeter(concept) {
   const mastery = attempts ? conceptMastery(state, concept.id) : 0;
   const tone = !attempts ? "none" : mastery < 60 ? "low" : mastery < 80 ? "mid" : "ok";
   return `<article class="concept">
-    <h3>${esc(concept.name)}</h3>
+    <h3><button class="text-btn" type="button" data-action="practice-concept" data-concept="${esc(concept.id)}">${esc(concept.name)}</button></h3>
     <p class="en" lang="en">${esc(concept.nameEn)}. ${esc(concept.blurb)}</p>
     <div class="meter ${tone}">
       <div class="meter-track"><span style="width:${attempts ? mastery : 0}%"></span></div>
@@ -756,14 +880,16 @@ function renderAbout() {
 
 function renderVocab() {
   const query = mem.query.trim().toLowerCase();
-  const themes = ["alle", ...new Set(allVocab().map((word) => word.theme))];
-  const list = allVocab().filter((word) => {
-    const themeOk = mem.theme === "alle" || word.theme === mem.theme;
-    const hay = `${word.no} ${word.en} ${word.example}`.toLowerCase();
+  const groups = groupVocab(allVocab());
+  const themes = ["alle", ...new Set(groups.flatMap((group) => group.themes))];
+  const list = groups.filter((group) => {
+    const themeOk = mem.theme === "alle" || group.themes.includes(mem.theme);
+    const hay = `${group.display} ${group.en} ${group.examples.join(" ")}`.toLowerCase();
     return themeOk && (!query || hay.includes(query));
   });
   return `
     <h1>Ordbank</h1>
+    <p class="fine">Like oppslag er slått sammen. «ei uke» og «en uke» står som «ei/en uke». Trykk på pilen for å høre ordet.</p>
     <label>Søk
       <input id="vocab-search" type="search" data-vocab-query value="${esc(mem.query)}" />
     </label>
@@ -775,9 +901,21 @@ function renderVocab() {
     <p class="fine">${list.length} treff</p>
     ${list
       .slice(0, 80)
-      .map(
-        (word) => `<article class="word"><div class="no">${esc(word.no)}</div><div class="en" lang="en">${esc(word.en)}</div><div>${esc(word.example)}</div><div class="fine">${esc(word.level)} · ${esc(word.theme)}</div></article>`,
-      )
+      .map((group) => {
+        const src = vocabAudio[group.ids[0]] || "";
+        return `<article class="word">
+          <div class="word-head">
+            <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(src)}" aria-label="Spill av ${esc(group.display)}">▶</button>
+            <div>
+              <div class="no">${esc(group.display)}</div>
+              <div class="en" lang="en">${esc(group.en)}</div>
+            </div>
+          </div>
+          ${group.examples.map((example) => `<div>${esc(example)}</div>`).join("")}
+          ${group.articlePair ? `<p class="fine">Begge artiklene er riktig bokmål.</p>` : ""}
+          <div class="fine">${esc(group.level)} · ${esc(group.themes.join(", "))}</div>
+        </article>`;
+      })
       .join("")}
     ${list.length > 80 ? `<p class="fine">Viser 80 av ${list.length}. Snevre inn søket for resten.</p>` : ""}
   `;
@@ -812,10 +950,19 @@ function renderSettings() {
 function renderLesson(id) {
   const lesson = lessonsById.get(id);
   if (!lesson) return `<h1>Fant ikke leksjonen</h1><a class="btn" href="#/kurs">Til kurset</a>`;
+  const matches = state.session?.kind === "lesson" && state.session.lessonId === id;
+  if (!matches) {
+    const restored = lessonFromCursor(id);
+    if (restored) state.session = restored;
+  }
   if (!state.session || state.session.kind !== "lesson" || state.session.lessonId !== id) {
     return `<h1>${esc(lesson.title)}</h1><p>${esc(lesson.maal)}</p><button class="btn" type="button" data-action="open-lesson" data-id="${esc(id)}">Start</button>`;
   }
   const session = state.session;
+  if (session.phase !== "intro" && session.phase !== "words" && session.phase !== "quiz" && session.phase !== "done") {
+    session.phase = "intro";
+    session.index = 0;
+  }
   if (session.phase === "intro") {
     return `
       <p class="kicker">${esc(lesson.level)} · ${lesson.minutes} min</p>
@@ -842,8 +989,12 @@ function renderLesson(id) {
     `;
   }
   if (session.phase === "done") return renderResult(lesson.title, session);
-  const exercise = lesson.exercises[session.index];
-  return exerciseBlock(exercise, `Øvelse ${session.index + 1} av ${lesson.exercises.length}`);
+  if (session.phase !== "quiz") {
+    session.phase = "intro";
+    return renderLesson(id);
+  }
+  const exercise = lesson.exercises[session.index] || lesson.exercises[0];
+  return exerciseBlock(exercise, `Øvelse ${Math.min(session.index, lesson.exercises.length - 1) + 1} av ${lesson.exercises.length}`);
 }
 
 function renderPlacement() {
@@ -884,17 +1035,45 @@ function renderPlacementResult(session) {
   `;
 }
 
+function startConceptPractice(conceptId) {
+  if (!conceptById[conceptId]) return;
+  ensureProfile(state.profile?.level || "B1");
+  const cap = state.profile?.level === "C2" ? "C1" : state.profile?.level || "C1";
+  const capIndex = LEVELS.indexOf(cap);
+  const pool = lessons.flatMap((lesson) =>
+    lesson.exercises.filter((exercise) => exercise.concept === conceptId).map((exercise) => ({ exercise, level: lesson.level })),
+  );
+  let scoped = pool.filter((item) => LEVELS.indexOf(item.level) <= capIndex);
+  if (scoped.length < 4) scoped = pool;
+  const picked = shuffle(scoped).slice(0, 8);
+  state.session = {
+    kind: "concept",
+    conceptId,
+    phase: picked.length ? "quiz" : "empty",
+    index: 0,
+    answers: [],
+    plan: picked.map((item) => item.exercise.id),
+    finalized: false,
+  };
+  resetAnswer();
+  save();
+  go("#/ovelse");
+}
+
 function renderReview() {
   const session = state.session;
-  if (!session || session.kind !== "review") {
+  if (!session || (session.kind !== "review" && session.kind !== "concept")) {
     return `<h1>Repetisjon</h1><button class="btn" type="button" data-action="review">Lag en økt</button>`;
   }
   if (session.phase === "empty") {
     return `<h1>Ingenting i køen ennå</h1><p>Fullfør en leksjon. Ordene og oppgavene du bommer på, blir liggende til senere.</p><a class="btn" href="#/">Til i dag</a>`;
   }
-  if (session.phase === "done") return renderResult("Repetisjon", session);
+  if (session.phase === "done") return renderResult(session.kind === "concept" ? conceptLabel(session.conceptId) : "Repetisjon", session);
   const task = currentTask();
-  const label = `Oppgave ${session.index + 1} av ${session.plan.length} · ${session.weakCount} svake · ${session.reviewCount} repetisjon`;
+  const label =
+    session.kind === "concept"
+      ? `Øvelse ${session.index + 1} av ${session.plan.length} · ${conceptLabel(session.conceptId)}`
+      : `Oppgave ${session.index + 1} av ${session.plan.length} · ${session.weakCount} svake · ${session.reviewCount} repetisjon`;
   if (task?.vocab) return vocabBlock(task.vocab, label);
   if (task?.exercise) return exerciseBlock(task.exercise, label);
   return `<h1>Denne oppgaven mangler</h1><button class="btn" type="button" data-action="next">Hopp over</button>`;
@@ -912,6 +1091,7 @@ function renderResult(title, session) {
       <a class="btn secondary" href="#/fremgang">Fremgang</a>
       ${session.kind === "reading" ? `<a class="btn ghost" href="#/lesing">Flere tekster</a>` : ""}
     </div>
+    ${session.dictAnswers?.length ? `<p class="fine">Diktat: ${session.dictAnswers.filter((item) => item?.ok).length} av ${session.dictAnswers.filter(Boolean).length} uten å telle store bokstaver og tegn.</p>` : ""}
   `;
 }
 
@@ -956,33 +1136,329 @@ function renderReadingList() {
   `;
 }
 
+function voiceLabel(voice) {
+  return String(voice || "").includes("Finn") ? "Finn" : "Pernille";
+}
+
 function renderReading(id) {
   const reading = readingsById.get(id);
   if (!reading) return `<h1>Fant ikke teksten</h1><a class="btn" href="#/lesing">Til lesing</a>`;
   const session = state.session;
-  const active = session?.kind === "reading" && session.readingId === id && !session.finalized;
-  if (!active || session.phase === "read") {
-    return `
-      <p class="kicker">${esc(reading.level)} · ${reading.minutes} min</p>
-      <h1>${esc(reading.title)}</h1>
-      <p class="en" lang="en">${esc(reading.titleEn)}</p>
-      <audio controls preload="none" src="${esc(reading.audio)}">
-        Nettleseren spiller ikke lydfilen. Du kan fortsatt lese teksten.
-      </audio>
-      <p class="fine">Stemmen er bokmål. Spill av lydfilen mens du følger teksten, eller skjul teksten og hør først.</p>
-      <button class="btn ghost" type="button" data-action="toggle-text" aria-pressed="${mem.hideText}">${mem.hideText ? "Vis teksten" : "Skjul teksten"}</button>
-      ${
-        mem.hideText
-          ? `<p class="note">Teksten er skjult. Trykk på spill av.</p>`
-          : `<article class="reading">${reading.text.map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}</article>`
-      }
-      <button class="btn" type="button" data-action="start-reading" data-id="${esc(id)}">Til spørsmålene</button>
-    `;
+  const mine = session?.kind === "reading" && session.readingId === id;
+  if (mine && session.phase === "done") return renderResult(reading.title, session);
+  if (mine && !session.finalized && session.phase === "dict") return renderDictation(reading);
+  if (mine && !session.finalized && session.phase === "quiz") {
+    const task = currentTask();
+    if (!task?.exercise) return `<h1>Spørsmålet mangler</h1><a class="btn" href="#/lesing">Til lesing</a>`;
+    return exerciseBlock(task.exercise, `Spørsmål ${session.index + 1} av ${reading.questions.length}`);
   }
-  if (session.phase === "done") return renderResult(reading.title, session);
-  const task = currentTask();
-  if (!task?.exercise) return `<h1>Spørsmålet mangler</h1><a class="btn" href="#/lesing">Til lesing</a>`;
-  return exerciseBlock(task.exercise, `Spørsmål ${session.index + 1} av ${reading.questions.length}`);
+  return renderReadingArticle(reading);
+}
+
+function renderReadingArticle(reading) {
+  const sentences = sentencesOf(reading);
+  let cursor = 0;
+  const body = reading.paragraphs
+    .map((paragraph) => {
+      const rows = paragraph
+        .map((text) => {
+          const sentence = sentences[cursor];
+          cursor += 1;
+          const number = cursor;
+          const key = sentence.audio;
+          const recording = mem.recordingKey === key;
+          const take = mem.takes[key];
+          const shown = mem.hideText ? `Setning ${number}` : text;
+          return `<div class="sentence-row">
+            <div class="sentence-actions">
+              <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(sentence.audio)}" aria-label="Spill setning ${number}">▶</button>
+              <button class="icon-btn ${recording ? "rec" : ""}" type="button" data-action="record-sentence" data-key="${esc(key)}" data-src="${esc(sentence.audio)}" aria-pressed="${recording}" aria-label="${recording ? "Stopp opptak" : "Ta opp setningen"}">${recording ? "■" : "●"}</button>
+              ${take ? `<button class="icon-btn" type="button" data-action="compare-take" data-key="${esc(key)}" data-src="${esc(sentence.audio)}" aria-label="Sammenlign opptaket med opplesningen">⇄</button>` : ""}
+            </div>
+            <p>${esc(shown)}</p>
+          </div>`;
+        })
+        .join("");
+      return `<div class="paragraph">${rows}</div>`;
+    })
+    .join("");
+  return `
+    <p class="kicker">${esc(reading.level)} · ${reading.minutes} min · ${esc(voiceLabel(reading.voice))}</p>
+    <h1>${esc(reading.title)}</h1>
+    <p class="en" lang="en">${esc(reading.titleEn)}</p>
+    <div class="player">
+      <button class="icon-btn" type="button" data-action="toggle-full" data-src="${esc(reading.audio)}" aria-pressed="false" aria-label="Spill av hele teksten">▶</button>
+      <div>
+        <strong>Hele teksten</strong>
+        <div class="fine" data-duration-for="${esc(reading.audio)}"></div>
+      </div>
+    </div>
+    <p class="note" data-audio-error hidden>Nettleseren spiller ikke lydfilen. Du kan fortsatt lese teksten.</p>
+    <p class="fine">Stemmen er bokmål. ▶ spiller setningen. ● tar opp stemmen din på denne enheten, og spiller originalen og opptaket etter hverandre. Ingenting lastes opp.</p>
+    ${mem.micNote ? `<p class="note" role="alert">${esc(mem.micNote)}</p>` : ""}
+    <button class="btn ghost" type="button" data-action="toggle-text" aria-pressed="${mem.hideText}">${mem.hideText ? "Vis teksten" : "Skjul teksten"}</button>
+    <article class="reading">${body}</article>
+    <div class="row">
+      <button class="btn" type="button" data-action="start-dictation" data-id="${esc(reading.id)}">Til diktat</button>
+      <button class="btn secondary" type="button" data-action="start-reading" data-id="${esc(reading.id)}">Til spørsmålene</button>
+    </div>
+  `;
+}
+
+function renderDictation(reading) {
+  const session = state.session;
+  const expected = reading.dictation[session.index];
+  const audio = sentencesOf(reading).find((sentence) => sentence.text === expected)?.audio || "";
+  const last = session.index + 1 >= reading.dictation.length;
+  return `
+    <p class="kicker">Diktat ${session.index + 1} av ${reading.dictation.length}</p>
+    <h1>Skriv det du hører</h1>
+    <p class="en" lang="en"><span class="en-label">EN</span> Case and punctuation do not count. The sentence stays hidden until you check.</p>
+    <div class="player">
+      <button class="icon-btn" type="button" data-action="play-src" data-src="${esc(audio)}" aria-label="Spill setningen">▶</button>
+      <div>
+        <strong>Setning ${session.index + 1}</strong>
+        <div class="fine" data-duration-for="${esc(audio)}"></div>
+      </div>
+    </div>
+    <p class="note" data-audio-error hidden>Nettleseren spiller ikke lydfilen.</p>
+    ${mem.note ? `<p class="note" role="alert">${esc(mem.note)}</p>` : ""}
+    <label>Din setning
+      <textarea data-draft ${mem.locked ? "disabled" : ""}>${esc(mem.draft)}</textarea>
+    </label>
+    ${mem.feedback ? dictationFeedback(mem.feedback) : ""}
+    ${
+      mem.locked
+        ? `<button class="btn" type="button" data-action="next-dict">${last ? "Til spørsmålene" : "Neste setning"}</button>`
+        : `<button class="btn" type="button" data-action="submit-dict">Sjekk</button>`
+    }
+  `;
+}
+
+function dictationFeedback(feedback) {
+  const marks = (feedback.diff || [])
+    .map((part) => {
+      if (part.type === "missing") return `<mark class="miss">${esc(part.text)}</mark>`;
+      if (part.type === "extra") return `<del>${esc(part.text)}</del>`;
+      return esc(part.text);
+    })
+    .join(" ");
+  return `<div class="feedback ${feedback.ok ? "ok" : "bad"}" id="feedback" tabindex="-1">
+    <p><strong>${feedback.ok ? "Riktig." : "Ikke helt."}</strong></p>
+    <p class="diff">${marks}</p>
+    <p>Setningen var: ${esc(feedback.expected)}</p>
+    <p class="fine">Gult mangler. Overstreket er ekstra. Store bokstaver og tegn teller ikke.</p>
+  </div>`;
+}
+
+const clip = new Audio();
+clip.preload = "auto";
+clip.playbackRate = 1;
+clip.dataset.owner = "";
+clip.setAttribute("data-player", "engine");
+clip.style.display = "none";
+document.body.appendChild(clip);
+
+const durationCache = new Map();
+let playToken = 0;
+let clipDone = null;
+let recorder = null;
+let recordStream = null;
+
+function absoluteSrc(src) {
+  return new URL(src, location.href).href;
+}
+
+function formatClock(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "";
+  const total = Math.round(seconds);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function showAudioError() {
+  const node = document.querySelector("[data-audio-error]");
+  if (node) node.hidden = false;
+}
+
+function settleClip() {
+  const done = clipDone;
+  clipDone = null;
+  if (done) done();
+}
+
+function haltAudio() {
+  playToken += 1;
+  clip.pause();
+  settleClip();
+}
+
+function paintDurations() {
+  const owner = clip.dataset.owner || "";
+  for (const node of document.querySelectorAll("[data-duration-for]")) {
+    const url = absoluteSrc(node.dataset.durationFor);
+    const known = durationCache.get(url);
+    if (!Number.isFinite(known) || known <= 0) {
+      node.textContent = "";
+      continue;
+    }
+    let current = 0;
+    if (owner === url && Number.isFinite(clip.currentTime)) {
+      current = clip.ended ? 0 : clip.currentTime;
+    }
+    node.textContent = `${formatClock(current)} / ${formatClock(known)}`;
+  }
+}
+
+function paintPlayer() {
+  const playing = !clip.paused && !clip.ended;
+  const owner = clip.dataset.owner || "";
+  for (const button of document.querySelectorAll("[data-action='toggle-full']")) {
+    const on = playing && absoluteSrc(button.dataset.src) === owner;
+    button.textContent = on ? "❚❚" : "▶";
+    button.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+  paintDurations();
+}
+
+function rememberDuration() {
+  if (Number.isFinite(clip.duration) && clip.duration > 0 && clip.dataset.owner) {
+    durationCache.set(clip.dataset.owner, clip.duration);
+  }
+  paintPlayer();
+}
+
+clip.addEventListener("timeupdate", paintPlayer);
+clip.addEventListener("pause", paintPlayer);
+clip.addEventListener("play", paintPlayer);
+clip.addEventListener("loadedmetadata", rememberDuration);
+clip.addEventListener("ended", paintPlayer);
+
+function playUrl(src) {
+  if (!src) return Promise.resolve();
+  haltAudio();
+  const token = playToken;
+  const url = absoluteSrc(src);
+  return new Promise((resolve) => {
+    clipDone = resolve;
+    const finish = () => {
+      if (token !== playToken) return;
+      settleClip();
+      paintPlayer();
+    };
+    clip.addEventListener("ended", finish, { once: true });
+    clip.addEventListener(
+      "error",
+      () => {
+        if (token !== playToken) return;
+        showAudioError();
+        settleClip();
+      },
+      { once: true },
+    );
+    clip.src = url;
+    clip.playbackRate = 1;
+    clip.dataset.owner = url;
+    clip.play().catch(() => {
+      if (token !== playToken) return;
+      showAudioError();
+      settleClip();
+    });
+  });
+}
+
+async function playThen(first, second) {
+  await playUrl(first);
+  if (!second) return;
+  await playUrl(second);
+}
+
+function ensureDuration(src) {
+  const url = absoluteSrc(src);
+  if (durationCache.has(url)) return Promise.resolve(durationCache.get(url));
+  return new Promise((resolve) => {
+    const probe = new Audio();
+    probe.preload = "metadata";
+    const finish = (value) => {
+      if (Number.isFinite(value) && value > 0) durationCache.set(url, value);
+      probe.removeAttribute("src");
+      probe.load();
+      resolve(durationCache.get(url) || 0);
+    };
+    probe.addEventListener("loadedmetadata", () => finish(probe.duration), { once: true });
+    probe.addEventListener(
+      "error",
+      () => {
+        showAudioError();
+        finish(0);
+      },
+      { once: true },
+    );
+    probe.src = url;
+  });
+}
+
+function hydrateAudio() {
+  clip.playbackRate = 1;
+  const sources = [...document.querySelectorAll("[data-duration-for]")].map((node) => node.dataset.durationFor).filter(Boolean);
+  for (const src of sources) ensureDuration(src).then(() => paintDurations());
+  paintPlayer();
+}
+
+function releaseStream() {
+  recordStream?.getTracks().forEach((track) => track.stop());
+  recordStream = null;
+}
+
+async function toggleRecord(key, src) {
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    return;
+  }
+  if (mem.recordingKey === "pending") return;
+  mem.recordingKey = "pending";
+  haltAudio();
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    mem.recordingKey = "";
+    mem.micNote = "Mikrofonen ble ikke tillatt. Opptaket blir bare liggende i denne nettleseren, og ingenting lastes opp.";
+    render();
+    return;
+  }
+  releaseStream();
+  recordStream = stream;
+  let nextRecorder;
+  try {
+    const mime = typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+    nextRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+  } catch {
+    releaseStream();
+    mem.recordingKey = "";
+    mem.micNote = "Mikrofonen ble ikke tillatt. Opptaket blir bare liggende i denne nettleseren, og ingenting lastes opp.";
+    render();
+    return;
+  }
+  recorder = nextRecorder;
+  const chunks = [];
+  recorder.ondataavailable = (event) => {
+    if (event.data?.size) chunks.push(event.data);
+  };
+  recorder.onstop = () => {
+    releaseStream();
+    const blob = new Blob(chunks, { type: recorder?.mimeType || "audio/webm" });
+    if (mem.takes[key]) URL.revokeObjectURL(mem.takes[key]);
+    const url = URL.createObjectURL(blob);
+    mem.takes[key] = url;
+    mem.recordingKey = "";
+    recorder = null;
+    render();
+    playThen(src, url);
+  };
+  mem.recordingKey = key;
+  mem.micNote = "";
+  recorder.start();
+  render();
 }
 
 function render() {
@@ -1044,6 +1520,7 @@ function render() {
       search.setSelectionRange(end, end);
     }
   }
+  hydrateAudio();
   focusMode = "none";
 }
 
@@ -1051,6 +1528,46 @@ function onClick(event) {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
+  if (action === "play-src") {
+    playUrl(button.dataset.src);
+    return;
+  }
+  if (action === "toggle-full") {
+    const src = button.dataset.src;
+    const url = absoluteSrc(src);
+    if (clip.dataset.owner === url && !clip.paused && !clip.ended) {
+      clip.pause();
+      paintPlayer();
+      return;
+    }
+    playUrl(src);
+    return;
+  }
+  if (action === "record-sentence") {
+    toggleRecord(button.dataset.key, button.dataset.src);
+    return;
+  }
+  if (action === "compare-take") {
+    const take = mem.takes[button.dataset.key];
+    if (take) playThen(button.dataset.src, take);
+    return;
+  }
+  if (action === "start-dictation") {
+    beginDictation(button.dataset.id);
+    return;
+  }
+  if (action === "submit-dict") {
+    submitDictation();
+    return;
+  }
+  if (action === "next-dict") {
+    nextDict();
+    return;
+  }
+  if (action === "practice-concept") {
+    startConceptPractice(button.dataset.concept);
+    return;
+  }
   if (action === "choose") {
     if (mem.locked) return;
     mem.choice = button.dataset.value;
@@ -1219,6 +1736,7 @@ document.getElementById("main").addEventListener("submit", onSubmit);
 document.addEventListener("keydown", onKeydown);
 window.addEventListener("hashchange", () => {
   focusMode = "route";
+  haltAudio();
   render();
 });
 render();

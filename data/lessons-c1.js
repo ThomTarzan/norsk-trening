@@ -680,15 +680,15 @@ A good test: if you can say the sentence aloud to your manager without running o
     concepts: ["punctuation", "relatives"],
     maal: "Du setter komma i innskudd og etter tunge subjekt, og lar være ellers.",
     husk: "Tallene, som kom i går, stemmer. Jeg ser at de stemmer.",
-    intro: `Complex sentences need fewer commas than English writers expect, but the commas they need are structural.
+    intro: `Complex sentences need the structural commas, not a comma before every at.
 
-A non-restrictive insertion has a comma on both sides, including a relative clause or a short comment: Tallene, som kom i går, stemmer. Anna, controlleren vår, sender notatet. Missing the second comma is the usual error.
+A fronted subordinate clause takes one comma at its end, even when the clause is long: Da vi hadde avstemt tallene og forklart avviket, sendte jeg notatet. A fronted at-clause is the same: At tallene stemmer, er godt nytt. Do not put a comma after da or after at alone.
+
+The norm is a comma when a subordinate clause follows the main clause: Vi utsetter møtet, fordi tallene mangler. An at-clause used as the object is the exception and normally has no comma: Jeg ser at tallene stemmer. When two such object clauses are coordinated and at is repeated, put a comma before the second one: Jeg ser at tallene stemmer, og at avviket er lite.
+
+A non-restrictive insertion has a comma on both sides: Tallene, som kom i går, stemmer. Anna, controlleren vår, sender notatet. Missing the second comma is the usual error.
 
 A restrictive relative has no comma before som: Tallene som gjelder lisenser, stemmer. The comma before stemmer closes the subject. It is not a comma before som.
-
-A fronted subordinate clause takes one comma at its end, even when the clause is long: Da vi hadde avstemt tallene og forklart avviket, sendte jeg notatet. Do not put a comma after da.
-
-Two coordinated subordinate clauses do not each get a new comma pattern. Jeg ser at tallene stemmer og at avviket er lite. No comma before the first at, and none is required before og at when the two at-clauses are short objects. If they are long, a comma before og can help, but the safe course in these exercises is no comma before a short og at.
 
 Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not "Anbefalingen, står ved lag".`,
     examples: [
@@ -730,9 +730,9 @@ Do not separate a simple subject from its verb. Anbefalingen står ved lag. Not 
       mc(
         "punctuation",
         "Hvilken setning er riktig om to korte at-setninger?",
-        ["Jeg ser at tallene stemmer og at avviket er lite.", "Jeg ser, at tallene stemmer, og, at avviket er lite.", "Jeg ser at, tallene stemmer og at avviket er lite.", "Jeg ser, at tallene stemmer og at avviket er lite."],
-        "Jeg ser at tallene stemmer og at avviket er lite.",
-        "No comma before a necessary at. The coordinated second at-clause stays in the same pattern when both clauses are short.",
+        ["Jeg ser at tallene stemmer, og at avviket er lite.", "Jeg ser, at tallene stemmer, og at avviket er lite.", "Jeg ser at, tallene stemmer og at avviket er lite.", "Jeg ser, at tallene stemmer og at avviket er lite."],
+        "Jeg ser at tallene stemmer, og at avviket er lite.",
+        "No comma before the first at: that clause is the object. The norm is a comma before the second, coordinated at-clause, because at is repeated. A fronted at-clause would take its comma after the clause, not before at.",
       ),
       order(
         "punctuation",
@@ -1105,7 +1105,7 @@ When a sentence fails, it is usually because two rules have been applied to the 
       fill(
         "adverb-sub",
         "Fyll inn ikke i leddsetningen.",
-        "Vi tar den med fordi den ___ er høy.",
+        "Vi tar den med, fordi den ___ er høy.",
         ["ikke"],
         "Fordi starts a subordinate clause. Ikke stands before er. The main clause keeps ikke after the finite verb if you negate that clause instead.",
       ),
@@ -1135,8 +1135,8 @@ When a sentence fails, it is usually because two rules have been applied to the 
         "adverb-sub",
         "Skriv setningen riktig.",
         "Vi utelater risikoen fordi er den ikke høy.",
-        ["Vi utelater risikoen fordi den ikke er høy"],
-        "No inversion in the fordi-clause, and ikke stands before the verb.",
+        ["Vi utelater risikoen, fordi den ikke er høy"],
+        "No inversion in the fordi-clause, and ikke stands before the verb. A fordi-clause that follows the main clause normally takes a comma.",
       ),
       mc(
         "v2",
