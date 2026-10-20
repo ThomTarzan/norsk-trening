@@ -136,7 +136,7 @@ export const placement = {
         "Hvilken setning har riktig komma?",
         ["Når tallene er klare, sender jeg dem.", "Jeg ser, at avviket er lite.", "Jeg skriver, og sender notatet.", "Kostnader, inntekter, og avvik."],
         "Når tallene er klare, sender jeg dem.",
-        "Comma after a fronted subordinate clause. No comma before a necessary at, none when the subject is shared, and no comma before og in a list.",
+        "Comma after a fronted subordinate clause. A subordinate clause after the main clause normally takes a comma, but an at-clause used as the object does not. None when the subject is shared, and no comma before og in a list.",
       ),
     ),
     item(

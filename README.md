@@ -12,8 +12,9 @@ Appen er laget for daglig øving på 10–15 minutter: en som har tatt norskkurs
 4. Les den korte forklaringen, gå gjennom ordene, og svar på øvelsene. Du får fasit med én gang. Oppgavene er flervalg eller ord du trykker sammen. Du skal ikke skrive hele setninger selv.
 5. **Repetisjon** blander omtrent 70 % fra svake emner med 30 % repetisjon. Ord og oppgaver du bommer på, kommer tilbake senere.
 6. **Jobbnorsk** er én leksjon i uka: e-post, status, referat, tall og høflig uenighet.
-7. **Lesing**, under Mer, har tekster med ferdig innspilt opplesning. Spill av lydfilen når du vil høre uttalen.
-8. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne.
+7. **Lesing**, under Mer, har tekster med ferdig innspilt opplesning. Spill av hele teksten, eller én setning om gangen. ● tar opp stemmen din i nettleseren (ingenting lastes opp) og spiller originalen og opptaket etter hverandre. **Til diktat** lar deg høre en setning og skrive den. Store bokstaver og tegn teller ikke. Deretter kommer noen spørsmål om teksten.
+8. **Fremgang** viser rekke, antall leksjoner og mestring per grammatikk-emne. Trykk på et emne for å øve på det.
+9. **Ordbank** har en avspillingsknapp per oppslag. «ei uke» og «en uke» står som «ei/en uke».
 
 Fremgangen lagres i nettleseren (`localStorage`). Den følger ikke med til en annen telefon av seg selv.
 
@@ -110,7 +111,9 @@ I kildefilene kan du fortsatt skrive `fill`, `fix` og `rewrite`. De blir lukket 
 - `fill` blir flervalg for ordet som mangler. Legg alternativene i `data/gap-choices.js` med samme id som øvelsen, for eksempel `b2-01-e2`. Ikke legg en annen godkjent form inn som feil svar.
 - `fix` og `rewrite` blir flervalg mellom den første godkjente setningen og utgangspunktet.
 
-Lesetekster ligger i `data/readings.js`. Hver tekst har en mp3 i `audio/` med samme navn som id-en. Lydfilene er lest inn med den norske stemmen `nb-NO-PernilleNeural` og ligger i repositoriet, så de virker uten nett. Nye filer kan lages med `node scripts/build-audio.mjs` hvis `edge-tts` er installert.
+Lesetekster ligger i `data/readings.js` og `data/readings-more.js`. Hver tekst har en mp3 i `audio/` med samme navn som id-en, pluss én fil per setning i `audio/setninger/`. Opplesningen er neural bokmål fra `edge-tts`: `nb-NO-PernilleNeural` og `nb-NO-FinnNeural`, tempo `-8%`. Ordbanken har en kort mp3 per oppslag i `audio/ord/`. Filene ligger i repositoriet, så de virker uten nett. Nye filer kan lages med `node scripts/build-audio.mjs` hvis `edge-tts` er installert. Avspilleren har ikke hastighetskontroll.
+
+Komma i leksjonene følger bokmålsnormalen: komma etter en innledende leddsetning, komma når leddsetningen kommer etter helsetningen, og ikke komma foran en at-setning som er objekt.
 
 Ekstra ord som ikke hører til én leksjon, legges i `data/vocab-bank.js`.
 

@@ -1,12 +1,10 @@
-import { mc } from "./build.js";
+import { moreReadings } from "./readings-more.js";
+import { rq, sentencesOf, readingPlain } from "./reading-build.js";
 
-const question = (id, concept, prompt, options, answer, explanation) => ({
-  id,
-  ...mc(concept, prompt, options, answer, explanation),
-});
+const question = rq;
 
 /** Short texts with a matching recording. Questions are multiple choice. */
-export const readings = [
+const coreReadings = [
   {
     id: "les-a2-01",
     level: "A2",
@@ -14,10 +12,33 @@ export const readings = [
     title: "Mandag morgen",
     titleEn: "Monday morning",
     audio: "audio/les-a2-01.mp3",
-    text: [
-      "Tsvitana står opp klokka sju. Hun spiser frokost og drikker kaffe. Så tar hun toget til jobben. Hun jobber i Avinor, og kontoret ligger i Oslo.",
-      "På kontoret hilser hun på kollegaene. «God morgen», sier hun. Møtet starter klokka ni. Tsvitana åpner kalenderen. Hun har tre møter i dag.",
-      "Etter lunsj skal hun skrive et kort notat. Hun skriver det på norsk. Om ettermiddagen er hun litt sliten, men hun er fornøyd. Hun tar toget hjem klokka fire. I kveld vil hun lese litt og legge seg tidlig.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Møtet starter klokka ni.",
+      "Hun skriver det på norsk.",
+      "Hun tar toget hjem klokka fire.",
+    ],
+    paragraphs: [
+      [
+        "Tsvitana står opp klokka sju.",
+        "Hun spiser frokost og drikker kaffe.",
+        "Så tar hun toget til jobben.",
+        "Hun jobber i Avinor, og kontoret ligger i Oslo.",
+      ],
+      [
+        "På kontoret hilser hun på kollegaene.",
+        "«God morgen», sier hun.",
+        "Møtet starter klokka ni.",
+        "Tsvitana åpner kalenderen.",
+        "Hun har tre møter i dag.",
+      ],
+      [
+        "Etter lunsj skal hun skrive et kort notat.",
+        "Hun skriver det på norsk.",
+        "Om ettermiddagen er hun litt sliten, men hun er fornøyd.",
+        "Hun tar toget hjem klokka fire.",
+        "I kveld vil hun lese litt og legge seg tidlig.",
+      ],
     ],
     questions: [
       question(
@@ -58,10 +79,30 @@ export const readings = [
     title: "En kort e-post",
     titleEn: "A short e-mail",
     audio: "audio/les-b1-01.mp3",
-    text: [
-      "Hei Kari. Jeg sender et kort notat om status. Vi har gått gjennom tallene for september. De fleste kostnadsstedene er avstemt, men ett kostnadssted mangler et bilag.",
-      "Jeg har bedt teamet om å finne bilaget innen onsdag. Hvis vi ikke finner det, tar jeg det med i statusen til ledelsen. Prognosen er ellers uendret.",
-      "Kan du se på vedlegget før møtet på torsdag? Gi gjerne beskjed hvis noe er uklart. Jeg oppdaterer statusen så snart bilaget er funnet. Vennlig hilsen, Tsvitana.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Prognosen er ellers uendret.",
+      "Kan du se på vedlegget før møtet på torsdag?",
+      "Jeg oppdaterer statusen så snart bilaget er funnet.",
+    ],
+    paragraphs: [
+      [
+        "Hei Kari.",
+        "Jeg sender et kort notat om status.",
+        "Vi har gått gjennom tallene for september.",
+        "De fleste kostnadsstedene er avstemt, men ett kostnadssted mangler et bilag.",
+      ],
+      [
+        "Jeg har bedt teamet om å finne bilaget innen onsdag.",
+        "Hvis vi ikke finner det, tar jeg det med i statusen til ledelsen.",
+        "Prognosen er ellers uendret.",
+      ],
+      [
+        "Kan du se på vedlegget før møtet på torsdag?",
+        "Gi gjerne beskjed hvis noe er uklart.",
+        "Jeg oppdaterer statusen så snart bilaget er funnet.",
+        "Vennlig hilsen, Tsvitana.",
+      ],
     ],
     questions: [
       question(
@@ -97,11 +138,31 @@ export const readings = [
     title: "Et kort referat",
     titleEn: "Short minutes",
     audio: "audio/les-b1-02.mp3",
-    text: [
-      "Referat fra et kort møte tolvte oktober. Tilstede var Kari, Per og Tsvitana.",
-      "Sak 1 var status på rapporten. Tsvitana sa at utkastet er klart. Kari ba henne sende det innen fredag.",
-      "Sak 2 var møtet med revisor. Per har snakket med revisor, og de møtes neste uke. Filene ligger hos Per.",
-      "Vedtak: Tsvitana sender utkastet innen fredag. Per kaller inn til møtet med revisor. Neste statusmøte er om to uker. Da går vi gjennom kommentarene fra revisor. Kari leder møtet og skriver referatet.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Tsvitana sa at utkastet er klart.",
+      "Filene ligger hos Per.",
+      "Vedtak: Tsvitana sender utkastet innen fredag.",
+    ],
+    paragraphs: [
+      ["Referat fra et kort møte tolvte oktober.", "Tilstede var Kari, Per og Tsvitana."],
+      [
+        "Sak 1 var status på rapporten.",
+        "Tsvitana sa at utkastet er klart.",
+        "Kari ba henne sende det innen fredag.",
+      ],
+      [
+        "Sak 2 var møtet med revisor.",
+        "Per har snakket med revisor, og de møtes neste uke.",
+        "Filene ligger hos Per.",
+      ],
+      [
+        "Vedtak: Tsvitana sender utkastet innen fredag.",
+        "Per kaller inn til møtet med revisor.",
+        "Neste statusmøte er om to uker.",
+        "Da går vi gjennom kommentarene fra revisor.",
+        "Kari leder møtet og skriver referatet.",
+      ],
     ],
     questions: [
       question(
@@ -137,10 +198,30 @@ export const readings = [
     title: "Status til ledelsen",
     titleEn: "Status to management",
     audio: "audio/les-b2-01.mp3",
-    text: [
-      "Status per 16. oktober. Leveransen av månedsrapporten ligger etter planen. Utkastet skulle ha vært ferdig i går, men vi mangler avstemming av lisenskostnaden. Avviket er på omtrent fire prosent sammenlignet med budsjettet. Det skyldes en prisjustering, ikke et nytt kjøp.",
-      "Vi holder likevel fristen mot ledelsen. Jeg sender et oppdatert utkast innen torsdag. Prognosen tilsier at vi fortsatt er innenfor rammen for året, dersom prisjusteringen ikke blir større i november.",
-      "Risikoen er at bilaget kommer sent. Jeg tar den med i notatet. Den er ikke høy, men den er reell.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Det skyldes en prisjustering, ikke et nytt kjøp.",
+      "Jeg sender et oppdatert utkast innen torsdag.",
+      "Den er ikke høy, men den er reell.",
+    ],
+    paragraphs: [
+      [
+        "Status per 16. oktober.",
+        "Leveransen av månedsrapporten ligger etter planen.",
+        "Utkastet skulle ha vært ferdig i går, men vi mangler avstemming av lisenskostnaden.",
+        "Avviket er på omtrent fire prosent sammenlignet med budsjettet.",
+        "Det skyldes en prisjustering, ikke et nytt kjøp.",
+      ],
+      [
+        "Vi holder likevel fristen mot ledelsen.",
+        "Jeg sender et oppdatert utkast innen torsdag.",
+        "Prognosen tilsier at vi fortsatt er innenfor rammen for året, dersom prisjusteringen ikke blir større i november.",
+      ],
+      [
+        "Risikoen er at bilaget kommer sent.",
+        "Jeg tar den med i notatet.",
+        "Den er ikke høy, men den er reell.",
+      ],
     ],
     questions: [
       question(
@@ -181,10 +262,30 @@ export const readings = [
     title: "Notat om et avvik",
     titleEn: "A note on a variance",
     audio: "audio/les-c1-01.mp3",
-    text: [
-      "Notat til ledelsen. I september økte lisenskostnaden med fire prosent sammenlignet med budsjettet. Økningen skyldes en prisjustering hos leverandøren. Kostnaden føres på kostnadssted 410 og periodiseres over tolv måneder, i tråd med budsjettet.",
-      "Avviket er i all hovedsak forklart. Ett bilag er likevel ikke mottatt. Når bilaget kommer, oppdaterer jeg prognosen. Inntil videre tilsier prognosen at vi holder årsrammen.",
-      "Jeg anbefaler at vi ikke endrer budsjettet nå. En endring ville blande en prisjustering sammen med et nytt vedtak. Jeg svarer med forbehold om at bilaget bekrefter beløpet.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Økningen skyldes en prisjustering hos leverandøren.",
+      "Inntil videre tilsier prognosen at vi holder årsrammen.",
+      "Jeg anbefaler at vi ikke endrer budsjettet nå.",
+    ],
+    paragraphs: [
+      [
+        "Notat til ledelsen.",
+        "I september økte lisenskostnaden med fire prosent sammenlignet med budsjettet.",
+        "Økningen skyldes en prisjustering hos leverandøren.",
+        "Kostnaden føres på kostnadssted 410 og periodiseres over tolv måneder, i tråd med budsjettet.",
+      ],
+      [
+        "Avviket er i all hovedsak forklart.",
+        "Ett bilag er likevel ikke mottatt.",
+        "Når bilaget kommer, oppdaterer jeg prognosen.",
+        "Inntil videre tilsier prognosen at vi holder årsrammen.",
+      ],
+      [
+        "Jeg anbefaler at vi ikke endrer budsjettet nå.",
+        "En endring ville blande en prisjustering sammen med et nytt vedtak.",
+        "Jeg svarer med forbehold om at bilaget bekrefter beløpet.",
+      ],
     ],
     questions: [
       question(
@@ -230,10 +331,29 @@ export const readings = [
     title: "Lufthavn og IT",
     titleEn: "Airport operations and IT",
     audio: "audio/les-c1-02.mp3",
-    text: [
-      "Mandag morgen var punktligheten på lufthavnen god, selv om det hadde snødd i natt. Vinterdriften var i gang, og avgangen til Oslo gikk som planlagt. Rullebanen var ikke stengt.",
-      "Samtidig hadde IT-avdelingen en hendelse i tilgangssystemet. To medarbeidere fikk ikke logget på mellom klokka sju og åtte. Hendelsen er lukket. Den var ikke et budsjettavvik, og den påvirket ikke flytrafikken.",
-      "I statusen skiller jeg derfor mellom driften på lufthavnen og hendelsen i systemet. Ledelsen får begge deler i samme notat, men under hvert sitt punkt. Slik blir det tydelig hva som krever oppfølging, og hva som allerede er løst.",
+    voice: "nb-NO-PernilleNeural",
+    dictation: [
+      "Rullebanen var ikke stengt.",
+      "Hendelsen er lukket.",
+      "Den var ikke et budsjettavvik, og den påvirket ikke flytrafikken.",
+    ],
+    paragraphs: [
+      [
+        "Mandag morgen var punktligheten på lufthavnen god, selv om det hadde snødd i natt.",
+        "Vinterdriften var i gang, og avgangen til Oslo gikk som planlagt.",
+        "Rullebanen var ikke stengt.",
+      ],
+      [
+        "Samtidig hadde IT-avdelingen en hendelse i tilgangssystemet.",
+        "To medarbeidere fikk ikke logget på mellom klokka sju og åtte.",
+        "Hendelsen er lukket.",
+        "Den var ikke et budsjettavvik, og den påvirket ikke flytrafikken.",
+      ],
+      [
+        "I statusen skiller jeg derfor mellom driften på lufthavnen og hendelsen i systemet.",
+        "Ledelsen får begge deler i samme notat, men under hvert sitt punkt.",
+        "Slik blir det tydelig hva som krever oppfølging, og hva som allerede er løst.",
+      ],
     ],
     questions: [
       question(
@@ -279,6 +399,10 @@ export const readings = [
   },
 ];
 
+export const readings = [...coreReadings, ...moreReadings];
+
 export function readingMap() {
   return new Map(readings.map((reading) => [reading.id, reading]));
 }
+
+export { sentencesOf, readingPlain };
